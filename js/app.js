@@ -132,6 +132,51 @@ function mountUI(bridge) {
   mountOrrery   (document.querySelector('[data-host="orrery"]'), state, onChange, bridge);
   mountGearDag  (document.querySelector('[data-host="dag"]'),    state, onChange, bridge);
 
+  // Inject a maximize/restore button into every viewport's header. State
+  // lives in `state.maximized` (null | viewport id) and is hash-synced.
+  viewerEl.querySelectorAll(".viewport").forEach((vp) => {
+    const id = vp.id.replace("vp-", "");
+    const controls = vp.querySelector(".panel-header .header-controls");
+    if (!controls) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "hdr-btn maximize-btn";
+    btn.dataset.maxFor = id;
+    btn.setAttribute("aria-pressed", "false");
+    btn.textContent = "⛶";
+    btn.addEventListener("click", () =>
+      setState({ maximized: state.maximized === id ? null : id }));
+    controls.appendChild(btn);
+  });
+  applyMaximized(state);
+  onChange(applyMaximized);
+
+  // Generic UI feedback for the decorative viewport-header buttons. These
+  // groups (Met/Sar/Exel · ancient/DE441/Δ · uniform/epicycle/equant ·
+  // overlay/π) didn't have click handlers before — wiring them so each
+  // click at least toggles the visual state. Functional effects on the
+  // underlying renderers come in later phases.
+  viewerEl.querySelectorAll(".panel-header .seg-control").forEach((sc) => {
+    sc.addEventListener("click", (e) => {
+      const btn = e.target.closest(".seg-btn");
+      if (!btn) return;
+      sc.querySelectorAll(".seg-btn").forEach((b) => {
+        const on = b === btn;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    });
+  });
+  viewerEl.querySelectorAll(".panel-header .hdr-btn[aria-pressed]").forEach((btn) => {
+    if (btn.dataset.dag) return;                      // gear-DAG: wired in gear-dag.js
+    if (btn.classList.contains("maximize-btn")) return; // maximize: wired above
+    btn.addEventListener("click", () => {
+      const next = btn.getAttribute("aria-pressed") !== "true";
+      btn.classList.toggle("active", next);
+      btn.setAttribute("aria-pressed", next ? "true" : "false");
+    });
+  });
+
   // 10 dock panels
   mountStatePanel    (panel("state"),    state, onChange, bridge);
   mountEclipsesPanel (panel("eclipses"), state, onChange, bridge);
@@ -157,9 +202,14 @@ function mountUI(bridge) {
     if (tab.dataset.tab === state.dockTab) tab.click();
   });
   document.getElementById("dock-collapse").addEventListener("click", () => {
+    dockEl.style.height = "";   // clear any drag-resized height first
     dockEl.classList.toggle("collapsed");
     setState({ dockCollapsed: dockEl.classList.contains("collapsed") });
   });
+
+  // Drag-to-resize handle on the top edge of the dock. Drag up to grow,
+  // down to shrink (clamped 80px..85vh). Double-click to reset to CSS default.
+  installDockResizeHandle();
 
   // Mobile viewport selector (only used at narrow widths)
   buildMobileVpTabs();
@@ -178,6 +228,56 @@ function applyReconUI() {
 function applyRegimeUI() {
   railEl.querySelectorAll("[data-regime]").forEach((b) =>
     b.classList.toggle("active", b.dataset.regime === state.regime));
+}
+
+/* ----- maximize / restore (one viewport fills the whole grid area) ------- */
+
+function applyMaximized(s) {
+  viewerEl.classList.toggle("has-maximized", !!s.maximized);
+  viewerEl.querySelectorAll(".viewport").forEach((vp) => {
+    const id = vp.id.replace("vp-", "");
+    vp.classList.toggle("maximized", id === s.maximized);
+  });
+  document.querySelectorAll(".maximize-btn").forEach((b) => {
+    const isActive = b.dataset.maxFor === s.maximized;
+    b.classList.toggle("active", isActive);
+    b.setAttribute("aria-pressed", isActive ? "true" : "false");
+    b.title = isActive ? "Restore" : "Maximize";
+  });
+}
+
+/* ----- drag-to-resize handle on the dock's top edge ---------------------- */
+
+function installDockResizeHandle() {
+  const handle = document.createElement("div");
+  handle.className = "dock-resize-handle";
+  handle.title = "Drag to resize · double-click to reset";
+  dockEl.insertBefore(handle, dockEl.firstChild);
+
+  let dragging = false, startY = 0, startH = 0;
+
+  handle.addEventListener("pointerdown", (e) => {
+    if (dockEl.classList.contains("collapsed")) return;
+    dragging = true;
+    startY = e.clientY;
+    startH = dockEl.getBoundingClientRect().height;
+    handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  handle.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dy = startY - e.clientY;       // drag up to grow
+    const newH = Math.max(80, Math.min(window.innerHeight * 0.85, startH + dy));
+    dockEl.style.height = newH + "px";
+  });
+  const stop = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+  };
+  handle.addEventListener("pointerup", stop);
+  handle.addEventListener("pointercancel", stop);
+  handle.addEventListener("dblclick", () => { dockEl.style.height = ""; });
 }
 
 /* ----- mobile single-pane switcher --------------------------------------- */

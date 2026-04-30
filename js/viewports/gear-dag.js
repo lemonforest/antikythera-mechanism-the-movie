@@ -9,6 +9,8 @@
  * Phase-1 stub draws static layered layout from bridge.gearDag().
  * ------------------------------------------------------------------------- */
 
+import { setState } from "../state.js";
+
 const SIZE_W = 760;
 const SIZE_H = 480;
 const PAD_X = 60, PAD_Y = 50;
@@ -21,7 +23,8 @@ export function mountGearDag(host, state, onChange, bridge) {
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
   host.appendChild(svg);
 
-  const readout = document.querySelector('.panel-header [data-vp="dag"]');
+  const dagPanel = host.closest(".viewport");
+  const readout  = document.querySelector('.panel-header [data-vp="dag"]');
 
   bridge.gearDag().then((dag) => {
     if (!dag) return;
@@ -33,10 +36,27 @@ export function mountGearDag(host, state, onChange, bridge) {
       const conj = dag.nodes.length - surv;
       readout.textContent = `${surv} surviving · ${conj} conjectural`;
     }
+    paintArch(svg, state);
   });
 
-  // Re-paint highlight on architecture-mode change.
-  onChange((s) => paintArch(svg, s));
+  /* ---- wire the header [data-dag] toggle buttons (clutch/setting/missing) -- */
+  dagPanel?.querySelectorAll("[data-dag]").forEach((btn) => {
+    const mode = btn.dataset.dag;
+    btn.addEventListener("click", () => {
+      setState({ arch: { ...state.arch, [mode]: !state.arch[mode] } });
+    });
+  });
+
+  /* ---- subscribe: re-paint nodes + sync button visual state --------------- */
+  onChange((s) => {
+    paintArch(svg, s);
+    dagPanel?.querySelectorAll("[data-dag]").forEach((btn) => {
+      const mode = btn.dataset.dag;
+      const on = !!s.arch?.[mode];
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  });
 }
 
 /* ---- layout ---------------------------------------------------------- */

@@ -508,8 +508,28 @@ code   { font-family: var(--font-mono); color: var(--accent); }
   transition: height 200ms ease;
   min-height: 0;
 }
-.dock.collapsed { height: var(--dock-h-collapsed); }
+.dock.collapsed { height: var(--dock-h-collapsed) !important; }
 .dock.collapsed .dock-body { display: none; }
+/* Dock is being interactively dragged — kill the height transition so the
+ * drag feels 1:1 with the cursor. */
+.dock[style*="height"] { transition: none; }
+
+/* Drag handle on the dock's top edge. Hidden when collapsed. */
+.dock-resize-handle {
+  height: 6px;
+  background: transparent;
+  border-top: 1px solid var(--line-strong);
+  cursor: ns-resize;
+  flex-shrink: 0;
+  user-select: none;
+  touch-action: none;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.dock-resize-handle:hover {
+  background: var(--bg-3);
+  border-top-color: var(--accent);
+}
+.dock.collapsed .dock-resize-handle { display: none; }
 
 .dock-tabs {
   display: flex;
@@ -634,6 +654,35 @@ code   { font-family: var(--font-mono); color: var(--accent); }
   position: absolute;
   inset: 0;
   background: linear-gradient(to right, var(--accent-cool), var(--accent));
+}
+
+/* ------------------------------------------------------------------------- *
+ * Maximize / restore — one viewport fills the entire viewer grid area.
+ * Other viewports are hidden but stay mounted (their state stays in sync).
+ * ------------------------------------------------------------------------- */
+
+.maximize-btn { padding: 3px 6px; font-size: 13px; line-height: 1; }
+.maximize-btn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+
+#viewer.viewer-grid.has-maximized {
+  grid-template-columns: var(--rail-w) 1fr;
+  /* minmax(0, 1fr) so the row fills available height instead of shrinking
+   * to content (the SVG is absolutely positioned, contributing 0 to flow). */
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "rail max";
+}
+#viewer.viewer-grid.has-maximized > #rail { grid-area: rail; }
+#viewer.viewer-grid.has-maximized > .viewport { display: none; }
+/* !important wins over the per-id `grid-area: front/back/sky/orrery/dag`
+ * rules that have higher CSS specificity than this class-based selector. */
+#viewer.viewer-grid.has-maximized > .viewport.maximized {
+  display: flex !important;
+  grid-area: max !important;
+}
+
+@media (max-width: 880px) {
+  .maximize-btn      { display: none; }
+  .dock-resize-handle { display: none; }
 }
 
 /* ------------------------------------------------------------------------- *
