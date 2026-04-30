@@ -37,6 +37,7 @@ export const state = {
   },
   view: "front",                  // mobile single-pane focus
   maximized: null,                // null | "front" | "back" | "sky" | "orrery" | "dag"
+  dagCollapsed: false,            // collapse the bottom DAG row → 2×2 dials get more space
   observer: { lat: 35.86, lon: 23.31 }, // Antikythera island
   dockTab: "state",
   dockCollapsed: false,
@@ -68,12 +69,17 @@ export function readHash() {
   const reg = params.get("regime");  if (reg)   state.regime = reg;
   const tab = params.get("tab");     if (tab)   state.dockTab = tab;
   const max = params.get("max");     if (max)   state.maximized = max === "none" ? null : max;
+  if (params.get("dagc") === "1") state.dagCollapsed = true;
 }
 
 let hashTimer = null;
 function syncHash() {
-  if (hashTimer) cancelAnimationFrame(hashTimer);
-  hashTimer = requestAnimationFrame(() => {
+  // setTimeout instead of rAF: rAF is paused on hidden tabs (e.g. background
+  // tabs, headless preview environments) which silently breaks hash sync;
+  // setTimeout fires regardless, and 50 ms is plenty of debounce for the
+  // play loop calling setState at 60 Hz.
+  if (hashTimer) clearTimeout(hashTimer);
+  hashTimer = setTimeout(() => {
     const p = new URLSearchParams();
     p.set("jd", state.jd.toFixed(1));
     p.set("view", state.view);
@@ -81,8 +87,9 @@ function syncHash() {
     p.set("regime", state.regime);
     p.set("tab", state.dockTab);
     if (state.maximized) p.set("max", state.maximized);
+    if (state.dagCollapsed) p.set("dagc", "1");
     history.replaceState(null, "", "#" + p.toString());
-  });
+  }, 50);
 }
 
 /* ----- play loop --------------------------------------------------------- */

@@ -680,9 +680,19 @@ code   { font-family: var(--font-mono); color: var(--accent); }
   grid-area: max !important;
 }
 
+/* When the gear-DAG row is collapsed, the third grid row sizes to its
+ * own header (auto) and the front/back/sky/orrery rows above split the
+ * remaining height ~50/50 instead of ~33/33/33. The DAG SVG is hidden
+ * but the viewport stays mounted so its state stays in sync. */
+#viewer.viewer-grid.dag-collapsed {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+#viewer.viewer-grid.dag-collapsed > #vp-dag .vp-host { display: none; }
+
 @media (max-width: 880px) {
   .maximize-btn      { display: none; }
   .dock-resize-handle { display: none; }
+  .dag-collapse-btn  { display: none; }
 }
 
 /* ------------------------------------------------------------------------- *
