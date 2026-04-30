@@ -175,6 +175,23 @@ function mountUI(bridge) {
   applyMaximized(state);
   onChange(applyMaximized);
 
+  // Collapse button on the gear-DAG header. Collapsing it shrinks the bottom
+  // row to its header height, giving the 2x2 dials above ~50% of the viewer
+  // height each instead of ~33%.
+  const dagControls = document.querySelector('#vp-dag .panel-header .header-controls');
+  if (dagControls) {
+    const cbtn = document.createElement("button");
+    cbtn.type = "button";
+    cbtn.className = "hdr-btn dag-collapse-btn";
+    cbtn.setAttribute("aria-pressed", state.dagCollapsed ? "true" : "false");
+    cbtn.textContent = state.dagCollapsed ? "▴" : "▾";
+    cbtn.title = "Collapse / expand";
+    cbtn.addEventListener("click", () => setState({ dagCollapsed: !state.dagCollapsed }));
+    dagControls.appendChild(cbtn);
+  }
+  applyDagCollapsed(state);
+  onChange(applyDagCollapsed);
+
   // Generic UI feedback for the decorative viewport-header buttons. These
   // groups (Met/Sar/Exel · ancient/DE441/Δ · uniform/epicycle/equant ·
   // overlay/π) didn't have click handlers before — wiring them so each
@@ -192,8 +209,9 @@ function mountUI(bridge) {
     });
   });
   viewerEl.querySelectorAll(".panel-header .hdr-btn[aria-pressed]").forEach((btn) => {
-    if (btn.dataset.dag) return;                      // gear-DAG: wired in gear-dag.js
-    if (btn.classList.contains("maximize-btn")) return; // maximize: wired above
+    if (btn.dataset.dag) return;                          // gear-DAG: wired in gear-dag.js
+    if (btn.classList.contains("maximize-btn")) return;   // maximize: wired above
+    if (btn.classList.contains("dag-collapse-btn")) return; // dag collapse: wired above
     btn.addEventListener("click", () => {
       const next = btn.getAttribute("aria-pressed") !== "true";
       btn.classList.toggle("active", next);
@@ -252,6 +270,19 @@ function applyReconUI() {
 function applyRegimeUI() {
   railEl.querySelectorAll("[data-regime]").forEach((b) =>
     b.classList.toggle("active", b.dataset.regime === state.regime));
+}
+
+/* ----- collapse the gear-DAG row (bottom of the viewer grid) ------------ */
+
+function applyDagCollapsed(s) {
+  viewerEl.classList.toggle("dag-collapsed", !!s.dagCollapsed);
+  const btn = document.querySelector(".dag-collapse-btn");
+  if (btn) {
+    btn.textContent = s.dagCollapsed ? "▴" : "▾";
+    btn.classList.toggle("active", !!s.dagCollapsed);
+    btn.setAttribute("aria-pressed", s.dagCollapsed ? "true" : "false");
+    btn.title = s.dagCollapsed ? "Expand" : "Collapse";
+  }
 }
 
 /* ----- maximize / restore (one viewport fills the whole grid area) ------- */
