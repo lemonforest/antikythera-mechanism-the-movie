@@ -33,6 +33,7 @@ export const state = {
     missing: false,
   },
   view: "front",                  // mobile single-pane focus
+  maximized: null,                // null | "front" | "back" | "sky" | "orrery" | "dag"
   observer: { lat: 35.86, lon: 23.31 }, // Antikythera island
   dockTab: "state",
   dockCollapsed: false,
@@ -63,6 +64,7 @@ export function readHash() {
   const recon = params.get("recon"); if (recon) state.recon = recon;
   const reg = params.get("regime");  if (reg)   state.regime = reg;
   const tab = params.get("tab");     if (tab)   state.dockTab = tab;
+  const max = params.get("max");     if (max)   state.maximized = max === "none" ? null : max;
 }
 
 let hashTimer = null;
@@ -75,6 +77,7 @@ function syncHash() {
     p.set("recon", state.recon);
     p.set("regime", state.regime);
     p.set("tab", state.dockTab);
+    if (state.maximized) p.set("max", state.maximized);
     history.replaceState(null, "", "#" + p.toString());
   });
 }
