@@ -1,12 +1,12 @@
 name: Deploy Pages
 
-# Run only when triggered manually. Pick the branch you want to publish from
-# GitHub's built-in "Use workflow from" dropdown — the workflow checks out
-# whichever branch you choose and publishes its contents to GitHub Pages.
+# Auto-deploy every push to main. The merge commit that lands a PR triggers
+# the build and the new contents replace the live Pages site within ~30 s.
 #
 # Setup: Repo Settings → Pages → Source: "GitHub Actions" (one-time).
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
 
 # Required to publish via the Pages API + OIDC token.
 permissions:
