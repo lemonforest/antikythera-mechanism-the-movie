@@ -54,63 +54,62 @@
     </div>
   </section>
 
-  <!-- Time-control rail (left edge, collapsible on mobile). -->
-  <aside id="rail" class="rail" hidden aria-label="Time controls">
-    <div class="rail-section">
-      <button data-act="play"  class="rail-btn primary" type="button" title="Play / pause (Space)">▶</button>
-      <button data-act="back"  class="rail-btn" type="button" title="Step back 1 day (←)">‹</button>
-      <button data-act="fwd"   class="rail-btn" type="button" title="Step forward 1 day (→)">›</button>
-      <select id="speed-sel" class="rail-select" aria-label="Speed">
-        <option value="1">×1 day/sec</option>
-        <option value="30">×30 day/sec</option>
-        <option value="365" selected>×365 day/sec</option>
-        <option value="6585">×Saros/sec</option>
-      </select>
-    </div>
-    <div class="rail-section">
-      <span class="rail-label dim">step</span>
-      <button data-step="-1"      class="rail-btn small" type="button">−d</button>
-      <button data-step="-30"     class="rail-btn small" type="button">−mo</button>
-      <button data-step="-365"    class="rail-btn small" type="button">−yr</button>
-      <button data-step="-6939"   class="rail-btn small" type="button">−Met</button>
-      <button data-step="-6585"   class="rail-btn small" type="button">−Sar</button>
-      <button data-step="6585"    class="rail-btn small" type="button">+Sar</button>
-      <button data-step="6939"    class="rail-btn small" type="button">+Met</button>
-      <button data-step="365"     class="rail-btn small" type="button">+yr</button>
-      <button data-step="30"      class="rail-btn small" type="button">+mo</button>
-      <button data-step="1"       class="rail-btn small" type="button">+d</button>
-    </div>
-    <div class="rail-section regime">
-      <span class="rail-label dim">operation</span>
-      <div class="seg-control" role="group" aria-label="Operation regime">
-        <button data-regime="continuous"   class="seg-btn"        type="button"
-                title="Continuous: G-H1 fails (~13°/19yr drift)">cont</button>
-        <button data-regime="intermittent" class="seg-btn active" type="button"
-                title="Intermittent (crank-as-clutch): G-H1 passes">interm</button>
-      </div>
-    </div>
-    <div class="rail-section recon">
-      <span class="rail-label dim">reconstruction</span>
-      <div class="seg-control vert" role="group" aria-label="Reconstruction column">
-        <button data-recon="freeth2021" class="seg-btn active" type="button"
-                title="Freeth et al. 2021 (Nature)">Freeth 2021</button>
-        <button data-recon="wright"     class="seg-btn"        type="button"
-                title="Michael Wright reconstruction">Wright</button>
-        <button data-recon="price1974"  class="seg-btn"        type="button"
-                title="Derek de Solla Price 1974">Price 1974</button>
-        <button data-recon="compare"    class="seg-btn"        type="button"
-                title="All three side-by-side">all three</button>
-      </div>
-    </div>
-    <div class="rail-section scrubber-section">
-      <span class="rail-label dim">JD scrub · 2000 BCE → 2100 CE</span>
-      <input id="jd-scrubber" type="range" min="990558" max="2487991" step="1" value="1684500">
-      <span id="jd-readout" class="mono">JD 1684500</span>
-    </div>
-  </aside>
-
-  <!-- Main viewport grid (5 panels: front, back, sky, orrery, DAG). -->
+  <!-- Main viewport grid: rail (col 1) + 5 panels in cols 2-3. -->
   <main id="viewer" class="viewer-grid" hidden>
+    <aside id="rail" class="rail" aria-label="Time controls">
+      <div class="rail-section">
+        <button data-act="play"  class="rail-btn primary" type="button" title="Play / pause (Space)">▶</button>
+        <button data-act="back"  class="rail-btn" type="button" title="Step back 1 day (←)">‹</button>
+        <button data-act="fwd"   class="rail-btn" type="button" title="Step forward 1 day (→)">›</button>
+        <select id="speed-sel" class="rail-select" aria-label="Speed">
+          <option value="1">×1 day/sec</option>
+          <option value="30">×30 day/sec</option>
+          <option value="365" selected>×365 day/sec</option>
+          <option value="6585">×Saros/sec</option>
+        </select>
+      </div>
+      <div class="rail-section">
+        <span class="rail-label dim">step</span>
+        <button data-step="-1"      class="rail-btn small" type="button">−d</button>
+        <button data-step="-30"     class="rail-btn small" type="button">−mo</button>
+        <button data-step="-365"    class="rail-btn small" type="button">−yr</button>
+        <button data-step="-6939"   class="rail-btn small" type="button">−Met</button>
+        <button data-step="-6585"   class="rail-btn small" type="button">−Sar</button>
+        <button data-step="6585"    class="rail-btn small" type="button">+Sar</button>
+        <button data-step="6939"    class="rail-btn small" type="button">+Met</button>
+        <button data-step="365"     class="rail-btn small" type="button">+yr</button>
+        <button data-step="30"      class="rail-btn small" type="button">+mo</button>
+        <button data-step="1"       class="rail-btn small" type="button">+d</button>
+      </div>
+      <div class="rail-section regime">
+        <span class="rail-label dim">operation</span>
+        <div class="seg-control" role="group" aria-label="Operation regime">
+          <button data-regime="continuous"   class="seg-btn"        type="button"
+                  title="Continuous: G-H1 fails (~13°/19yr drift)">cont</button>
+          <button data-regime="intermittent" class="seg-btn active" type="button"
+                  title="Intermittent (crank-as-clutch): G-H1 passes">interm</button>
+        </div>
+      </div>
+      <div class="rail-section recon">
+        <span class="rail-label dim">reconstruction</span>
+        <div class="seg-control vert" role="group" aria-label="Reconstruction column">
+          <button data-recon="freeth2021" class="seg-btn"        type="button"
+                  title="Freeth et al. 2021 (Nature)">Freeth 2021</button>
+          <button data-recon="wright"     class="seg-btn"        type="button"
+                  title="Michael Wright reconstruction">Wright</button>
+          <button data-recon="price1974"  class="seg-btn"        type="button"
+                  title="Derek de Solla Price 1974">Price 1974</button>
+          <button data-recon="compare"    class="seg-btn active" type="button"
+                  title="All three side-by-side">all three</button>
+        </div>
+      </div>
+      <div class="rail-section scrubber-section">
+        <span class="rail-label dim">JD scrub · 2000 BCE → 2100 CE</span>
+        <input id="jd-scrubber" type="range" min="990558" max="2487991" step="1" value="1684500">
+        <span id="jd-readout" class="mono">JD 1684500</span>
+      </div>
+    </aside>
+
     <section id="vp-front" class="panel viewport" aria-label="Front Dial — Cosmos Planetarium">
       <div class="panel-header">
         <h2>FRONT DIAL · COSMOS</h2>

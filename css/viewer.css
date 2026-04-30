@@ -67,6 +67,9 @@
 
 * { box-sizing: border-box; }
 
+/* The `hidden` HTML attribute should win over explicit display rules. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -475,6 +478,8 @@ code   { font-family: var(--font-mono); color: var(--accent); }
 
 .viewport .vp-host > svg,
 .viewport .vp-host > canvas {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;

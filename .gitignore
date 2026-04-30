@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# antikythera-spectral runtime caches (jplephem / skyfield kernel downloads).
+# DE441 alone is ~3 GB; never commit.
+skyfield_data/
+*.bsp
+*.bpc
+
+# Claude Code per-project state. We commit launch.json so contributors can
+# run the dev server with the same config; everything else is local.
+.claude/*
+!.claude/launch.json

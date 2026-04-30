@@ -1,8 +1,13 @@
 /* ------------------------------------------------------------------------- *
- * app.js — top-level state, viewport routing, hash sync, keyboard.
- * Loads the bridge (Pyodide + antikythera-spectral, with mock fallback),
- * then mounts the 5 viewports and 10 dock panels.
+ * app.js — boot orchestrator + viewport / panel mounting + DOM wiring.
+ *
+ * Canonical state, pub/sub, hash sync, and the play loop live in state.js so
+ * HUD modules can import them without creating ES-module cycles back to app.js.
  * ------------------------------------------------------------------------- */
+
+import {
+  state, setState, onChange, readHash, todayJD, REFERENCE_JD,
+} from "./state.js";
 
 import { Bridge } from "./bridge.js";
 import { mountFrontDial }  from "./viewports/front-dial.js";
@@ -23,69 +28,6 @@ import { mountArchPanel }      from "./panels/arch.js";
 import { mountPairedPanel }    from "./panels/paired.js";
 import { mountSeasonalPanel }  from "./panels/seasonal.js";
 import { mountParetoPanel }    from "./panels/pareto.js";
-
-/* ----- canonical state ---------------------------------------------------- */
-
-const REFERENCE_JD = 1684595;     // ~205 BCE, encoder reference epoch (notebook §3.2)
-const TODAY_JD     = 2460800;     // 2025-05-01, close enough for the UI default
-const JD_MIN       = 990558;      // ~2000 BCE
-const JD_MAX       = 2487991;     // ~2100 CE
-
-export const state = {
-  jd: REFERENCE_JD,
-  playing: false,
-  speed: 365,                     // days per second
-  regime: "intermittent",         // 'continuous' | 'intermittent'  (notebook §11.6.10)
-  recon: "freeth2021",            // 'freeth2021' | 'wright' | 'price1974' | 'compare'
-  arch: {                         // architectural-mode toggles (G-H4..G-H8)
-    clutch:  false,
-    setting: false,
-    missing: false,
-  },
-  view: "front",                  // mobile single-pane focus
-  observer: { lat: 35.86, lon: 23.31 }, // Antikythera island
-  dockTab: "state",
-  dockCollapsed: false,
-};
-
-/* ----- pub/sub: subscribers re-render when state changes ------------------ */
-
-const subs = new Set();
-export const onChange = (fn) => { subs.add(fn); return () => subs.delete(fn); };
-export const setState = (patch) => {
-  Object.assign(state, patch);
-  if (patch.arch) state.arch = { ...state.arch, ...patch.arch };
-  syncHash();
-  for (const fn of subs) try { fn(state); } catch (e) { console.error(e); }
-};
-
-/* ----- URL hash <-> state -------------------------------------------------- */
-
-function readHash() {
-  const h = window.location.hash.replace(/^#/, "");
-  if (!h) return;
-  const params = new URLSearchParams(h);
-  const jd = parseFloat(params.get("jd"));
-  if (!Number.isNaN(jd)) state.jd = clamp(jd, JD_MIN, JD_MAX);
-  const view = params.get("view");   if (view)   state.view = view;
-  const recon = params.get("recon"); if (recon)  state.recon = recon;
-  const reg = params.get("regime");  if (reg)    state.regime = reg;
-  const tab = params.get("tab");     if (tab)    state.dockTab = tab;
-}
-let hashTimer = null;
-function syncHash() {
-  if (hashTimer) cancelAnimationFrame(hashTimer);
-  hashTimer = requestAnimationFrame(() => {
-    const p = new URLSearchParams();
-    p.set("jd", state.jd.toFixed(1));
-    p.set("view", state.view);
-    p.set("recon", state.recon);
-    p.set("regime", state.regime);
-    p.set("tab", state.dockTab);
-    history.replaceState(null, "", "#" + p.toString());
-  });
-}
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 /* ----- boot --------------------------------------------------------------- */
 
@@ -157,7 +99,7 @@ function mountUI(bridge) {
 
   // Topbar buttons
   document.getElementById("btn-today").addEventListener("click",
-    () => setState({ jd: TODAY_JD }));
+    () => setState({ jd: todayJD() }));
   document.getElementById("btn-epoch").addEventListener("click",
     () => setState({ jd: REFERENCE_JD }));
   document.getElementById("btn-help").addEventListener("click", toggleHelp);
@@ -165,20 +107,20 @@ function mountUI(bridge) {
     (e) => { if (e.target.id === "help-overlay") toggleHelp(); });
 
   // Reconstruction column buttons (left rail)
-  railEl.querySelectorAll("[data-recon]").forEach(btn => {
+  railEl.querySelectorAll("[data-recon]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const recon = btn.dataset.recon;
       setState({ recon });
-      railEl.querySelectorAll("[data-recon]").forEach(b =>
+      railEl.querySelectorAll("[data-recon]").forEach((b) =>
         b.classList.toggle("active", b.dataset.recon === recon));
     });
   });
   // Operation regime buttons
-  railEl.querySelectorAll("[data-regime]").forEach(btn => {
+  railEl.querySelectorAll("[data-regime]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const regime = btn.dataset.regime;
       setState({ regime });
-      railEl.querySelectorAll("[data-regime]").forEach(b =>
+      railEl.querySelectorAll("[data-regime]").forEach((b) =>
         b.classList.toggle("active", b.dataset.regime === regime));
     });
   });
@@ -203,12 +145,12 @@ function mountUI(bridge) {
   mountParetoPanel   (panel("pareto"),   state, onChange, bridge);
 
   // Dock tab switching
-  dockEl.querySelectorAll(".dock-tab").forEach(tab => {
+  dockEl.querySelectorAll(".dock-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       const t = tab.dataset.tab;
-      dockEl.querySelectorAll(".dock-tab").forEach(b =>
+      dockEl.querySelectorAll(".dock-tab").forEach((b) =>
         b.classList.toggle("active", b.dataset.tab === t));
-      dockEl.querySelectorAll(".dock-panel").forEach(p =>
+      dockEl.querySelectorAll(".dock-panel").forEach((p) =>
         p.classList.toggle("active", p.dataset.panel === t));
       setState({ dockTab: t });
     });
@@ -230,11 +172,11 @@ function mountUI(bridge) {
 const panel = (name) => document.querySelector(`.dock-panel[data-panel="${name}"]`);
 
 function applyReconUI() {
-  railEl.querySelectorAll("[data-recon]").forEach(b =>
+  railEl.querySelectorAll("[data-recon]").forEach((b) =>
     b.classList.toggle("active", b.dataset.recon === state.recon));
 }
 function applyRegimeUI() {
-  railEl.querySelectorAll("[data-regime]").forEach(b =>
+  railEl.querySelectorAll("[data-regime]").forEach((b) =>
     b.classList.toggle("active", b.dataset.regime === state.regime));
 }
 
@@ -250,8 +192,8 @@ function buildMobileVpTabs() {
     b.dataset.vp = v;
     if (v === state.view) b.classList.add("active");
     b.addEventListener("click", () => {
-      tabs.querySelectorAll("button").forEach(x => x.classList.toggle("active", x === b));
-      document.querySelectorAll("#viewer .viewport").forEach(p =>
+      tabs.querySelectorAll("button").forEach((x) => x.classList.toggle("active", x === b));
+      document.querySelectorAll("#viewer .viewport").forEach((p) =>
         p.classList.toggle("mobile-active", p.id === `vp-${v}`));
       setState({ view: v });
     });
@@ -259,7 +201,7 @@ function buildMobileVpTabs() {
   }
   viewerEl.insertBefore(tabs, viewerEl.firstChild);
   // Mark current focus as mobile-active for narrow widths.
-  document.querySelectorAll("#viewer .viewport").forEach(p =>
+  document.querySelectorAll("#viewer .viewport").forEach((p) =>
     p.classList.toggle("mobile-active", p.id === `vp-${state.view}`));
 }
 
@@ -270,31 +212,13 @@ function toggleHelp() {
   ov.hidden = !ov.hidden;
 }
 
-/* ----- play loop ---------------------------------------------------------- */
-
-let playRaf = null;
-let playPrev = 0;
-export function setPlaying(v) {
-  state.playing = v;
-  cancelAnimationFrame(playRaf);
-  if (!v) return;
-  playPrev = performance.now();
-  const tick = (t) => {
-    const dt = (t - playPrev) / 1000;
-    playPrev = t;
-    setState({ jd: clamp(state.jd + dt * state.speed, JD_MIN, JD_MAX) });
-    if (state.playing) playRaf = requestAnimationFrame(tick);
-  };
-  playRaf = requestAnimationFrame(tick);
-}
-
 /* ----- go ----------------------------------------------------------------- */
 
 window.addEventListener("hashchange", () => {
   // External hash changes (back/forward) are a no-op for v1; could re-read.
 });
 
-boot().catch(e => {
+boot().catch((e) => {
   bootLog(`fatal: ${e.message}`, "fail");
   console.error(e);
 });
