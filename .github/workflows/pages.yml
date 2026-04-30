@@ -1,0 +1,63 @@
+name: Deploy Pages
+
+# Run only when triggered manually. Pick the branch you want to publish from
+# GitHub's built-in "Use workflow from" dropdown — the workflow checks out
+# whichever branch you choose and publishes its contents to GitHub Pages.
+#
+# Setup: Repo Settings → Pages → Source: "GitHub Actions" (one-time).
+on:
+  workflow_dispatch:
+
+# Required to publish via the Pages API + OIDC token.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time; don't cancel a running deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Stage published site
+        # Copy ONLY the assets the static site actually needs. We deliberately
+        # leave out scripts/ (local-only baker, dev server), .claude/,
+        # skyfield_data/ (3 GB JPL kernel cache), .github/, and anything else
+        # that isn't part of the deployed page.
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp index.html _site/
+          cp -r css js data _site/
+          # Optional public extras. Use cp -f so the workflow doesn't fail if missing.
+          [ -f LICENSE ] && cp LICENSE _site/ || true
+          echo "--- _site contents ---"
+          find _site -maxdepth 2 -print | sort
+          echo "--- size ---"
+          du -sh _site
+          du -sh _site/data
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Print deployed URL
+        run: echo "Deployed → ${{ steps.deployment.outputs.page_url }}"

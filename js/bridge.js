@@ -156,14 +156,18 @@ export class Bridge {
     return mockCalendars(jd);
   }
 
+  // VALIDATION-ONLY (needs DE421/DE441 kernels; ~3 GB unavailable in browser).
+  // The mechanism itself doesn't need ephemerides — only its cross-checks do.
+  // We attempt the live call (it'll throw without kernels) and degrade to mock.
+  // TODO: when antikythera-spectral exposes its validation-vs-mechanism split
+  // explicitly, surface a "validation unavailable in browser" hint in the UI.
   // find_eclipses(jd_lo, jd_hi, *, kind, kernel)
   eclipses(jdStart, jdEnd) {
     return this._call("eclipses", { jd_lo: jdStart, jd_hi: jdEnd, kind: "all", kernel: "de421" },
       () => mockEclipses(jdStart, jdEnd));
   }
 
-  // get_visibility_windows(jd_lo, jd_hi, planet, kernel)
-  // We hand it a ±30-day window so the result spans before/after the JD.
+  // VALIDATION-ONLY. get_visibility_windows(jd_lo, jd_hi, planet, kernel)
   visibilityWindow(body, jd) {
     if (body === "sun" || body === "moon") return Promise.resolve(mockVisibilityWindow(body, jd));
     return this._call("visibilityWindow", { jd_lo: jd - 30, jd_hi: jd + 30, planet: body, kernel: "de421" },
