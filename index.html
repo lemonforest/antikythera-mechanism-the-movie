@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Antikythera — Resonant HDC Instrument</title>
+  <meta name="description" content="Interactive Antikythera mechanism — front and back dials, classical sky view, geocentric orrery, and the periphery-rule gear DAG. Driven by antikythera-spectral in Pyodide.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/viewer.css">
+</head>
+<body class="state-loading">
+
+  <header id="topbar">
+    <div class="title-block">
+      <h1>ANTIKYTHERA · RESONANT HDC INSTRUMENT</h1>
+      <p class="subtitle">cosmos planetarium · spiral calendar · classical sky · geocentric orrery · periphery DAG</p>
+    </div>
+    <nav id="topbar-nav">
+      <div id="calendar-readout" class="breadcrumb mono" aria-label="Parallel calendars">
+        <span class="node" data-cal="gregorian">— gregorian —</span>
+        <span class="arrow">·</span>
+        <span class="node" data-cal="julian">— julian —</span>
+        <span class="arrow">·</span>
+        <span class="node" data-cal="athenian">— athenian —</span>
+        <span class="arrow">·</span>
+        <span class="node" data-cal="olympiad">— olympiad —</span>
+      </div>
+      <div class="topbar-actions">
+        <button id="btn-today" class="ghost-btn" type="button" title="Jump to today">Today</button>
+        <button id="btn-epoch" class="ghost-btn" type="button" title="Mechanism reference epoch (~205 BCE)">Epoch −205</button>
+        <button id="btn-help"  class="ghost-btn" type="button" title="Toggle help overlay (H)">?</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Boot / loading screen, shown until Pyodide + bridge are ready (or mock falls back). -->
+  <section id="boot" aria-live="polite">
+    <div class="boot-card">
+      <div class="boot-head">
+        <span class="mono">antikythera-spectral</span>
+        <span id="boot-status" class="mono dim">cold</span>
+      </div>
+      <div class="progress-bar"><div id="boot-progress"></div></div>
+      <ol id="boot-log" class="phase-log mono"></ol>
+      <p class="boot-meta dim">
+        Loads Pyodide and pip-installs <code class="mono">antikythera-spectral</code> in your browser.
+        First visit may take ~10–30 s; subsequent visits are cached. If it fails,
+        a JSON-ephemeris fallback boots the UI in demo mode.
+      </p>
+    </div>
+  </section>
+
+  <!-- Time-control rail (left edge, collapsible on mobile). -->
+  <aside id="rail" class="rail" hidden aria-label="Time controls">
+    <div class="rail-section">
+      <button data-act="play"  class="rail-btn primary" type="button" title="Play / pause (Space)">▶</button>
+      <button data-act="back"  class="rail-btn" type="button" title="Step back 1 day (←)">‹</button>
+      <button data-act="fwd"   class="rail-btn" type="button" title="Step forward 1 day (→)">›</button>
+      <select id="speed-sel" class="rail-select" aria-label="Speed">
+        <option value="1">×1 day/sec</option>
+        <option value="30">×30 day/sec</option>
+        <option value="365" selected>×365 day/sec</option>
+        <option value="6585">×Saros/sec</option>
+      </select>
+    </div>
+    <div class="rail-section">
+      <span class="rail-label dim">step</span>
+      <button data-step="-1"      class="rail-btn small" type="button">−d</button>
+      <button data-step="-30"     class="rail-btn small" type="button">−mo</button>
+      <button data-step="-365"    class="rail-btn small" type="button">−yr</button>
+      <button data-step="-6939"   class="rail-btn small" type="button">−Met</button>
+      <button data-step="-6585"   class="rail-btn small" type="button">−Sar</button>
+      <button data-step="6585"    class="rail-btn small" type="button">+Sar</button>
+      <button data-step="6939"    class="rail-btn small" type="button">+Met</button>
+      <button data-step="365"     class="rail-btn small" type="button">+yr</button>
+      <button data-step="30"      class="rail-btn small" type="button">+mo</button>
+      <button data-step="1"       class="rail-btn small" type="button">+d</button>
+    </div>
+    <div class="rail-section regime">
+      <span class="rail-label dim">operation</span>
+      <div class="seg-control" role="group" aria-label="Operation regime">
+        <button data-regime="continuous"   class="seg-btn"        type="button"
+                title="Continuous: G-H1 fails (~13°/19yr drift)">cont</button>
+        <button data-regime="intermittent" class="seg-btn active" type="button"
+                title="Intermittent (crank-as-clutch): G-H1 passes">interm</button>
+      </div>
+    </div>
+    <div class="rail-section recon">
+      <span class="rail-label dim">reconstruction</span>
+      <div class="seg-control vert" role="group" aria-label="Reconstruction column">
+        <button data-recon="freeth2021" class="seg-btn active" type="button"
+                title="Freeth et al. 2021 (Nature)">Freeth 2021</button>
+        <button data-recon="wright"     class="seg-btn"        type="button"
+                title="Michael Wright reconstruction">Wright</button>
+        <button data-recon="price1974"  class="seg-btn"        type="button"
+                title="Derek de Solla Price 1974">Price 1974</button>
+        <button data-recon="compare"    class="seg-btn"        type="button"
+                title="All three side-by-side">all three</button>
+      </div>
+    </div>
+    <div class="rail-section scrubber-section">
+      <span class="rail-label dim">JD scrub · 2000 BCE → 2100 CE</span>
+      <input id="jd-scrubber" type="range" min="990558" max="2487991" step="1" value="1684500">
+      <span id="jd-readout" class="mono">JD 1684500</span>
+    </div>
+  </aside>
+
+  <!-- Main viewport grid (5 panels: front, back, sky, orrery, DAG). -->
+  <main id="viewer" class="viewer-grid" hidden>
+    <section id="vp-front" class="panel viewport" aria-label="Front Dial — Cosmos Planetarium">
+      <div class="panel-header">
+        <h2>FRONT DIAL · COSMOS</h2>
+        <div class="header-controls">
+          <button data-vp-act="overlay" class="hdr-btn" type="button" aria-pressed="false" title="Show gear-ratio overlay">⊞</button>
+          <button data-vp-act="primes"  class="hdr-btn" type="button" aria-pressed="false" title="Highlight shared primes 7/17">π</button>
+          <span class="vp-readout mono dim" data-vp="front">—</span>
+        </div>
+      </div>
+      <div class="vp-host" data-host="front"></div>
+    </section>
+
+    <section id="vp-back" class="panel viewport" aria-label="Back Dial — Spirals">
+      <div class="panel-header">
+        <h2>BACK DIAL · SPIRALS</h2>
+        <div class="header-controls">
+          <button data-vp-act="metonic" class="hdr-btn active" type="button" aria-pressed="true"  title="Metonic 235/19">Met</button>
+          <button data-vp-act="saros"   class="hdr-btn active" type="button" aria-pressed="true"  title="Saros 223/19">Sar</button>
+          <button data-vp-act="exelig"  class="hdr-btn"        type="button" aria-pressed="false" title="Exeligmos 669/3">Exel</button>
+          <span class="vp-readout mono dim" data-vp="back">—</span>
+        </div>
+      </div>
+      <div class="vp-host" data-host="back"></div>
+    </section>
+
+    <section id="vp-sky" class="panel viewport" aria-label="Sky View — Classical Observer">
+      <div class="panel-header">
+        <h2>SKY · 35.86°N</h2>
+        <div class="header-controls">
+          <div class="seg-control" role="group" aria-label="Truth source">
+            <button data-sky="ancient" class="seg-btn active" type="button" aria-pressed="true">ancient</button>
+            <button data-sky="modern"  class="seg-btn"        type="button" aria-pressed="false">DE441</button>
+            <button data-sky="diff"    class="seg-btn"        type="button" aria-pressed="false">Δ</button>
+          </div>
+          <span class="vp-readout mono dim" data-vp="sky">—</span>
+        </div>
+      </div>
+      <div class="vp-host" data-host="sky"></div>
+    </section>
+
+    <section id="vp-orrery" class="panel viewport" aria-label="Orrery — Geocentric vs Heliocentric">
+      <div class="panel-header">
+        <h2>ORRERY · GEOCENTRIC</h2>
+        <div class="header-controls">
+          <div class="seg-control" role="group" aria-label="Greek planetary model">
+            <button data-orr="uniform"  class="seg-btn"        type="button" aria-pressed="false" title="~180° peak">uniform</button>
+            <button data-orr="epicycle" class="seg-btn active" type="button" aria-pressed="true"  title="~51° peak">epicycle</button>
+            <button data-orr="equant"   class="seg-btn"        type="button" aria-pressed="false" title="~49° peak">equant</button>
+          </div>
+          <span class="vp-readout mono dim" data-vp="orrery">—</span>
+        </div>
+      </div>
+      <div class="vp-host" data-host="orrery"></div>
+    </section>
+
+    <section id="vp-dag" class="panel viewport" aria-label="Gear DAG — Periphery & Architecture">
+      <div class="panel-header">
+        <h2>GEAR DAG · PERIPHERY RULE</h2>
+        <div class="header-controls">
+          <button data-dag="clutch"  class="hdr-btn" type="button" aria-pressed="false" title="Crank-as-clutch (C)">⏚</button>
+          <button data-dag="setting" class="hdr-btn" type="button" aria-pressed="false" title="Setting-mode wheels (S)">⚙</button>
+          <button data-dag="missing" class="hdr-btn" type="button" aria-pressed="false" title="Show conjectural missing gears">?</button>
+          <span class="vp-readout mono dim" data-vp="dag">30 surviving · 39 conjectural</span>
+        </div>
+      </div>
+      <div class="vp-host" data-host="dag"></div>
+    </section>
+  </main>
+
+  <!-- Bottom dock: 10 research surfaces from the notebook. -->
+  <footer id="dock" class="dock" hidden aria-label="Research panels">
+    <nav class="dock-tabs" role="tablist">
+      <button data-tab="state"     class="dock-tab active" role="tab" aria-selected="true">STATE</button>
+      <button data-tab="eclipses"  class="dock-tab"        role="tab" aria-selected="false">ECLIPSES</button>
+      <button data-tab="recon"     class="dock-tab"        role="tab" aria-selected="false">RECON</button>
+      <button data-tab="ephem"     class="dock-tab"        role="tab" aria-selected="false">EPHEM</button>
+      <button data-tab="hypoth"    class="dock-tab"        role="tab" aria-selected="false">HYPOTH</button>
+      <button data-tab="operator"  class="dock-tab"        role="tab" aria-selected="false">OPERATOR</button>
+      <button data-tab="arch"      class="dock-tab"        role="tab" aria-selected="false">ARCH</button>
+      <button data-tab="paired"    class="dock-tab"        role="tab" aria-selected="false">PAIRED</button>
+      <button data-tab="seasonal"  class="dock-tab"        role="tab" aria-selected="false">SEASONAL</button>
+      <button data-tab="pareto"    class="dock-tab"        role="tab" aria-selected="false">PARETO</button>
+      <button id="dock-collapse" class="dock-collapse" type="button" aria-label="Collapse dock">▾</button>
+    </nav>
+    <div class="dock-body">
+      <div class="dock-panel active" data-panel="state"></div>
+      <div class="dock-panel" data-panel="eclipses"></div>
+      <div class="dock-panel" data-panel="recon"></div>
+      <div class="dock-panel" data-panel="ephem"></div>
+      <div class="dock-panel" data-panel="hypoth"></div>
+      <div class="dock-panel" data-panel="operator"></div>
+      <div class="dock-panel" data-panel="arch"></div>
+      <div class="dock-panel" data-panel="paired"></div>
+      <div class="dock-panel" data-panel="seasonal"></div>
+      <div class="dock-panel" data-panel="pareto"></div>
+    </div>
+  </footer>
+
+  <!-- Floating help overlay. -->
+  <div id="help-overlay" class="help-overlay" hidden role="dialog" aria-label="Keyboard shortcuts">
+    <div class="help-card">
+      <h3>KEYBOARD</h3>
+      <dl class="info-grid mono">
+        <dt>← →</dt>             <dd>step ±1 day</dd>
+        <dt>[ ]</dt>             <dd>step ±1 month</dd>
+        <dt>{ }</dt>             <dd>step ±1 year</dd>
+        <dt>Space</dt>           <dd>play / pause</dd>
+        <dt>1–5</dt>             <dd>focus viewport (front · back · sky · orrery · DAG)</dd>
+        <dt>C</dt>               <dd>toggle crank-as-clutch</dd>
+        <dt>S</dt>               <dd>toggle setting-mode</dd>
+        <dt>R</dt>               <dd>reset to reference epoch</dd>
+        <dt>O</dt>               <dd>operator-mode walkthrough</dd>
+        <dt>H</dt>               <dd>this help</dd>
+      </dl>
+      <p class="dim">URL hash carries state: <code class="mono">#jd=…&amp;view=…&amp;recon=…&amp;regime=…</code></p>
+    </div>
+  </div>
+
+  <!-- Module entry point. All app code is ES modules. -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
