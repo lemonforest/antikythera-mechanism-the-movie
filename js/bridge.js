@@ -37,9 +37,18 @@ const PY_METHOD = {
   operatorRecalibrate: "operator_advance",
 };
 
+// Install directly from the published wheel URL on PyPI's CDN. Pyodide's
+// micropip carries a lockfile that pins some packages to older versions
+// (and `micropip.install("antikythera-spectral==0.2.0")` errors with
+// "Can't find a pure Python 3 wheel" because the lockfile entry overrides
+// the resolver). Direct-URL install bypasses the lockfile entirely.
+// Update PKG_VERSION + PKG_WHEEL_URL together when bumping the package.
+const PKG_VERSION   = "0.2.0";
+const PKG_WHEEL_URL = "https://files.pythonhosted.org/packages/9a/13/f55c7367e4a77e042e8ad6083f3fa160fe5c42c708785f00bd870f45ebb9/antikythera_spectral-0.2.0-py3-none-any.whl";
+
 const MICROPIP_BOOTSTRAP = `
 import micropip
-await micropip.install("antikythera-spectral")
+await micropip.install("${PKG_WHEEL_URL}")
 import antikythera_spectral.bridge as _akbridge
 `;
 
@@ -156,22 +165,49 @@ export class Bridge {
     return mockCalendars(jd);
   }
 
-  // VALIDATION-ONLY (needs DE421/DE441 kernels; ~3 GB unavailable in browser).
-  // The mechanism itself doesn't need ephemerides — only its cross-checks do.
-  // We attempt the live call (it'll throw without kernels) and degrade to mock.
-  // TODO: when antikythera-spectral exposes its validation-vs-mechanism split
-  // explicitly, surface a "validation unavailable in browser" hint in the UI.
-  // find_eclipses(jd_lo, jd_hi, *, kind, kernel)
-  eclipses(jdStart, jdEnd) {
-    return this._call("eclipses", { jd_lo: jdStart, jd_hi: jdEnd, kind: "all", kernel: "de421" },
-      () => mockEclipses(jdStart, jdEnd));
+  // find_eclipses(jd_lo, jd_hi, *, kind, kernel) — package v0.2.0 added an
+  // algebraic / Saros-driven path triggered by kernel="none", which works in
+  // the browser without any kernel data.
+  async eclipses(jdStart, jdEnd) {
+    const raw = await this._call("eclipses", { jd_lo: jdStart, jd_hi: jdEnd, kind: "all", kernel: "none" },
+      () => null);
+    if (!raw || !raw.eclipses) return mockEclipses(jdStart, jdEnd);
+    return {
+      ok: true,
+      count: raw.n_eclipses ?? raw.eclipses.length,
+      eclipses: raw.eclipses.map((e) => ({
+        jd: e.jd_tdb,
+        type: e.kind,
+        sarosOffset: e.saros_offset,
+        anchorLabel: e.anchor_label,
+        // No magnitude in algebraic mode — that needs a real kernel.
+      })),
+      mode: raw.mode || "algebraic",
+      _live: true,
+    };
   }
 
-  // VALIDATION-ONLY. get_visibility_windows(jd_lo, jd_hi, planet, kernel)
-  visibilityWindow(body, jd) {
-    if (body === "sun" || body === "moon") return Promise.resolve(mockVisibilityWindow(body, jd));
-    return this._call("visibilityWindow", { jd_lo: jd - 30, jd_hi: jd + 30, planet: body, kernel: "de421" },
-      () => mockVisibilityWindow(body, jd));
+  // get_visibility_windows(jd_lo, jd_hi, planet, kernel) — also gets an
+  // algebraic path in v0.2.0 via kernel="none".
+  async visibilityWindow(body, jd) {
+    if (body === "sun" || body === "moon") return mockVisibilityWindow(body, jd);
+    const raw = await this._call("visibilityWindow",
+      { jd_lo: jd - 30, jd_hi: jd + 30, planet: body, kernel: "none" },
+      () => null);
+    if (!raw || !raw.windows) return mockVisibilityWindow(body, jd);
+    const w = raw.windows[0];
+    if (!w) return { ok: true, body, jd, isVisible: false, _live: true };
+    return {
+      ok: true,
+      body,
+      jd,
+      isVisible: jd >= w.rise_jd && jd <= w.set_jd,
+      nextRisingJD:  w.rise_jd,
+      nextSettingJD: w.set_jd,
+      durationDays:  w.duration_days,
+      mode: raw.mode || "algebraic",
+      _live: true,
+    };
   }
 
   // compare_reconstructions(jd_tdb, *, dials='all')
@@ -210,7 +246,7 @@ export class Bridge {
       : mockPairedChains(planet);
   }
 
-  // Composite: walk planets through the year.
+  // Composite: per-planet visibility across one year. v0.2.0 algebraic mode.
   async seasonalWindows(year) {
     if (this.mode !== "live") return mockSeasonalWindows(year);
     const planets = ["mercury", "venus", "mars", "jupiter", "saturn"];
@@ -218,12 +254,44 @@ export class Bridge {
     const jdLo = 1721423.5 + (year - 1) * 365.25;
     const jdHi = jdLo + 365.25;
     const out = await Promise.all(planets.map((p) =>
-      this._raw("get_visibility_windows", { jd_lo: jdLo, jd_hi: jdHi, planet: p, kernel: "de421" },
+      this._raw("get_visibility_windows", { jd_lo: jdLo, jd_hi: jdHi, planet: p, kernel: "none" },
         () => null)
     ));
     const windows = {};
+    const fallback = mockSeasonalWindows(year).windows;
     planets.forEach((p, i) => {
-      windows[p] = out[i]?.windows || mockSeasonalWindows(year).windows[p];
+      const raw = out[i];
+      if (raw?.windows?.length) {
+        // Convert {rise_jd, set_jd, duration_days} → {startDay, endDay, state}
+        // relative to year start, plus interleaved invisibility runs.
+        const segments = [];
+        let lastEnd = jdLo;
+        for (const w of raw.windows) {
+          if (w.rise_jd > lastEnd) {
+            segments.push({
+              startDay: Math.max(0, Math.round(lastEnd - jdLo)),
+              endDay:   Math.min(365, Math.round(w.rise_jd - jdLo)),
+              state:    "invisible",
+            });
+          }
+          segments.push({
+            startDay: Math.max(0, Math.round(w.rise_jd - jdLo)),
+            endDay:   Math.min(365, Math.round(w.set_jd - jdLo)),
+            state:    "visible",
+          });
+          lastEnd = w.set_jd;
+        }
+        if (lastEnd < jdHi) {
+          segments.push({
+            startDay: Math.max(0, Math.round(lastEnd - jdLo)),
+            endDay:   365,
+            state:    "invisible",
+          });
+        }
+        windows[p] = segments.filter((s) => s.endDay > s.startDay);
+      } else {
+        windows[p] = fallback[p];
+      }
     });
     return { ok: true, year, windows, _live: true };
   }
