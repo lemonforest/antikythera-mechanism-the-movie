@@ -8,8 +8,11 @@
  * ------------------------------------------------------------------------- */
 
 export const REFERENCE_JD = 1684595;     // ~205 BCE, encoder reference epoch (notebook §3.2)
-export const JD_MIN       = 990558;      // ~2000 BCE
-export const JD_MAX       = 2487991;     // ~2100 CE
+// Upper bound is ~5000 CE; the package's calendar/eclipse internals start
+// erroring beyond ~10000 CE so we stay comfortably inside that. Lower bound
+// is ~5000 BCE; same reasoning for the deep past.
+export const JD_MIN       = -105192;     // ~5000 BCE
+export const JD_MAX       = 3547216;     // ~5000 CE
 
 // JD for the current civil date, computed at boot so it stays fresh.
 export function todayJD() {
