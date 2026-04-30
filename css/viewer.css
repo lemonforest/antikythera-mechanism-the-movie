@@ -1,0 +1,722 @@
+/* ------------------------------------------------------------------------- *
+ * Antikythera — Resonant HDC Instrument
+ * Dark scientific-instrument theme; palette extended from chess-maths-the-movie.
+ * No framework. CSS custom properties drive all colors and spacing.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  /* Backgrounds & lines (chess-maths) */
+  --bg-0: #0a0a0f;
+  --bg-1: #0f0f18;
+  --bg-2: #161624;
+  --bg-3: #1d1d2e;
+  --line:        rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  /* Foregrounds (chess-maths) */
+  --fg-0: #e8e8f0;
+  --fg-1: #b6b6c8;
+  --fg-2: #7d7d92;
+  --fg-3: #50506a;
+
+  /* Semaphore (chess-maths) */
+  --accent:      #ffb454;   /* gold — primary */
+  --accent-cool: #42d4f4;   /* cyan — secondary */
+  --warn:        #f58231;
+  --ok:          #3cb44b;
+  --fail:        #e6194b;
+  --partial:     #ffb454;
+  --pass:        #3cb44b;
+  --undet:       #7d7d92;
+
+  /* Antikythera-specific extensions (used only on dial faces, never on chrome) */
+  --bronze:    #b8804a;
+  --bronze-d:  #6a482a;     /* darker bronze for dial backgrounds */
+  --verdigris: #5a8a72;
+  --papyrus:   #d8c89a;
+  --saros:     #c97a4a;     /* saros spiral */
+  --metonic:   #8aa86a;     /* metonic spiral */
+  --olympic:   #b8804a;     /* games sub-dial */
+  --exelig:    #9a6a3a;     /* exeligmos sub-dial */
+  --callip:    #c8a86a;     /* callippic sub-dial */
+
+  /* Shared-prime emphasis (Freeth 2021) */
+  --prime-7:   #42d4f4;
+  --prime-17:  #ffb454;
+  --prime-19:  #f032e6;
+
+  /* Per-body channel palette (front dial pointers) */
+  --body-sun:     #ffb454;
+  --body-moon:    #d8c89a;
+  --body-mercury: #b6b6c8;
+  --body-venus:   #f58231;
+  --body-mars:    #e6194b;
+  --body-jupiter: #ffb454;
+  --body-saturn:  #b8804a;
+
+  --font-ui:   "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Sizing */
+  --topbar-h: 56px;
+  --rail-w: 200px;
+  --dock-h: 32vh;
+  --dock-h-collapsed: 36px;
+  --gap: 10px;
+}
+
+* { box-sizing: border-box; }
+
+/* The `hidden` HTML attribute should win over explicit display rules. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-0);
+  color: var(--fg-0);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+body {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: var(--topbar-h) 1fr auto;
+  grid-template-columns: 100%;
+}
+
+.mono { font-family: var(--font-mono); font-weight: 400; }
+.dim  { color: var(--fg-2); }
+
+button { font-family: inherit; }
+code   { font-family: var(--font-mono); color: var(--accent); }
+
+/* ------------------------------------------------------------------------- *
+ * Topbar
+ * ------------------------------------------------------------------------- */
+
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 22px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line);
+  gap: 24px;
+  grid-row: 1;
+}
+
+#topbar h1 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--fg-0);
+}
+
+#topbar .subtitle {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: var(--fg-2);
+  letter-spacing: 0.05em;
+}
+
+#topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.topbar-actions { display: flex; gap: 8px; }
+
+.ghost-btn {
+  background: transparent;
+  color: var(--fg-1);
+  border: 1px solid var(--line-strong);
+  padding: 6px 12px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.ghost-btn:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+  border-color: var(--accent);
+}
+
+/* Calendar parallel readouts (breadcrumb shape from chess-maths) */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-2);
+  max-width: 60vw;
+  overflow: hidden;
+}
+.breadcrumb .node {
+  padding: 2px 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--fg-1);
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.breadcrumb .node.active {
+  background: var(--bg-3);
+  color: var(--fg-0);
+  border-color: var(--accent);
+}
+.breadcrumb .arrow { color: var(--fg-3); margin: 0 2px; }
+
+/* ------------------------------------------------------------------------- *
+ * Boot screen
+ * ------------------------------------------------------------------------- */
+
+#boot {
+  grid-row: 2;
+  display: grid;
+  place-items: center;
+  padding: 60px 22px;
+}
+
+.boot-card {
+  width: min(560px, 92vw);
+  background: var(--bg-1);
+  border: 1px solid var(--line-strong);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.boot-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--fg-1);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--bg-3);
+  position: relative;
+  overflow: hidden;
+}
+#boot-progress {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 200ms ease;
+}
+
+.phase-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+  color: var(--fg-2);
+  max-height: 180px;
+  overflow-y: auto;
+}
+.phase-log li { padding: 2px 0; }
+.phase-log li.ok   { color: var(--ok); }
+.phase-log li.fail { color: var(--fail); }
+.phase-log li.warn { color: var(--warn); }
+
+.boot-meta {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------------- *
+ * Main viewer grid (5 panels) + left rail
+ * ------------------------------------------------------------------------- */
+
+#viewer {
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: var(--rail-w) 1fr;
+  grid-template-rows: 1fr;
+  gap: 0;
+  min-height: 0;
+}
+
+.viewer-grid > #rail { grid-column: 1; grid-row: 1; }
+
+/* The 5 viewports live in a 2x3 grid where the DAG spans the bottom. */
+.viewer-grid::after {
+  content: "";
+  display: none;
+}
+.viewer-grid {
+  /* nothing extra; rail + grid below is enough */
+}
+.viewports-host {
+  display: grid;
+  gap: var(--gap);
+  padding: var(--gap);
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-areas:
+    "front back"
+    "sky   orrery"
+    "dag   dag";
+  min-height: 0;
+}
+
+/* When body owns viewer, place the host in column 2 by structural rule. */
+#viewer.viewer-grid > .panel#vp-front  { grid-area: front; }
+#viewer.viewer-grid > .panel#vp-back   { grid-area: back; }
+#viewer.viewer-grid > .panel#vp-sky    { grid-area: sky; }
+#viewer.viewer-grid > .panel#vp-orrery { grid-area: orrery; }
+#viewer.viewer-grid > .panel#vp-dag    { grid-area: dag; }
+
+/* The whole viewer-grid uses the named-areas via column 2 sub-grid trick. */
+#viewer.viewer-grid {
+  grid-template-columns: var(--rail-w) 1fr;
+  grid-template-rows: 1fr;
+}
+#viewer.viewer-grid > #rail { grid-column: 1; }
+#viewer.viewer-grid > .panel.viewport {
+  /* Place panels into a sub-grid in column 2 by re-declaring. */
+}
+/* Use a wrapper-free trick: put all viewports into an implicit subgrid via a
+   nested grid container. We achieve this by setting grid-template-areas on
+   #viewer directly across both columns, where the rail occupies the first
+   column across all rows and viewports sit in column 2. */
+#viewer.viewer-grid {
+  grid-template-columns: var(--rail-w) 1fr 1fr;
+  grid-template-rows: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
+  grid-template-areas:
+    "rail front  back"
+    "rail sky    orrery"
+    "rail dag    dag";
+  gap: var(--gap);
+  padding: var(--gap);
+}
+#viewer.viewer-grid > #rail            { grid-area: rail; }
+#viewer.viewer-grid > #vp-front        { grid-area: front; }
+#viewer.viewer-grid > #vp-back         { grid-area: back; }
+#viewer.viewer-grid > #vp-sky          { grid-area: sky; }
+#viewer.viewer-grid > #vp-orrery       { grid-area: orrery; }
+#viewer.viewer-grid > #vp-dag          { grid-area: dag; }
+
+/* ------------------------------------------------------------------------- *
+ * Rail (time controls)
+ * ------------------------------------------------------------------------- */
+
+.rail {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.rail-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.rail-label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  width: 100%;
+  color: var(--fg-3);
+}
+
+.rail-btn {
+  background: var(--bg-2);
+  color: var(--fg-1);
+  border: 1px solid var(--line-strong);
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  min-width: 32px;
+}
+.rail-btn:hover { background: var(--bg-3); color: var(--fg-0); border-color: var(--accent); }
+.rail-btn.primary { background: var(--bg-3); color: var(--accent); border-color: var(--accent); }
+.rail-btn.small { padding: 3px 6px; font-size: 11px; min-width: 28px; }
+
+.rail-select {
+  background: var(--bg-2);
+  color: var(--fg-1);
+  border: 1px solid var(--line-strong);
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  flex: 1;
+}
+
+#jd-scrubber {
+  width: 100%;
+  margin-top: 4px;
+  accent-color: var(--accent);
+}
+#jd-readout {
+  font-size: 11px;
+  color: var(--fg-1);
+}
+
+/* Segmented control (chess-maths) */
+.seg-control {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+}
+.seg-control.vert { flex-direction: column; width: 100%; }
+
+.seg-btn {
+  background: transparent;
+  color: var(--fg-2);
+  border: none;
+  padding: 5px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.seg-control:not(.vert) > .seg-btn + .seg-btn { border-left: 1px solid var(--line); }
+.seg-control.vert       > .seg-btn + .seg-btn { border-top: 1px solid var(--line); }
+.seg-btn:hover { background: var(--bg-3); color: var(--fg-1); }
+.seg-btn.active {
+  background: var(--bg-3);
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------------------- *
+ * Panel + viewport
+ * ------------------------------------------------------------------------- */
+
+.panel {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(to bottom, var(--bg-2), var(--bg-1));
+  gap: 12px;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--fg-1);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hdr-btn {
+  background: var(--bg-2);
+  color: var(--fg-2);
+  border: 1px solid var(--line-strong);
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.hdr-btn:hover            { background: var(--bg-3); color: var(--fg-0); border-color: var(--accent); }
+.hdr-btn[aria-pressed="true"], .hdr-btn.active {
+  background: var(--bg-3);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.vp-readout {
+  font-size: 11px;
+}
+
+.viewport .vp-host {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at center, rgba(184, 128, 74, 0.04) 0%, transparent 60%),
+    var(--bg-0);
+}
+
+.viewport .vp-host > svg,
+.viewport .vp-host > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vp-empty {
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: 16px;
+}
+
+/* ------------------------------------------------------------------------- *
+ * Dock (bottom tabs)
+ * ------------------------------------------------------------------------- */
+
+.dock {
+  grid-row: 3;
+  background: var(--bg-1);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  height: var(--dock-h);
+  transition: height 200ms ease;
+  min-height: 0;
+}
+.dock.collapsed { height: var(--dock-h-collapsed); }
+.dock.collapsed .dock-body { display: none; }
+
+.dock-tabs {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.dock-tab {
+  flex: 1;
+  background: transparent;
+  color: var(--fg-2);
+  border: none;
+  border-right: 1px solid var(--line);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+  padding: 0 8px;
+}
+.dock-tab:hover { background: var(--bg-3); color: var(--fg-1); }
+.dock-tab.active {
+  background: var(--bg-1);
+  color: var(--accent);
+  box-shadow: 0 -2px 0 var(--accent) inset;
+}
+
+.dock-collapse {
+  background: transparent;
+  color: var(--fg-2);
+  border: none;
+  border-left: 1px solid var(--line);
+  width: 36px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.dock-collapse:hover { color: var(--fg-0); background: var(--bg-3); }
+.dock.collapsed .dock-collapse { transform: rotate(180deg); }
+
+.dock-body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.dock-panel {
+  position: absolute;
+  inset: 0;
+  padding: 12px 16px;
+  overflow-y: auto;
+  display: none;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.dock-panel.active { display: block; }
+
+.dock-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--fg-2);
+  text-transform: uppercase;
+}
+
+/* Info-grid (chess-maths dl/dt/dd pattern) */
+.info-grid {
+  display: grid;
+  grid-template-columns: minmax(80px, max-content) 1fr;
+  gap: 4px 16px;
+  font-size: 12px;
+  margin: 0;
+}
+.info-grid dt { color: var(--fg-2); }
+.info-grid dd { margin: 0; color: var(--fg-0); }
+
+/* Hypothesis battery rows */
+.hypoth-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.hypoth-table th, .hypoth-table td {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.hypoth-table th {
+  font-weight: 600;
+  color: var(--fg-2);
+  font-family: var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+.hypoth-table td.tag-pass    { color: var(--pass); }
+.hypoth-table td.tag-partial { color: var(--partial); }
+.hypoth-table td.tag-fail    { color: var(--fail); }
+.hypoth-table td.tag-undet   { color: var(--undet); }
+
+/* Reconstruction diff bars */
+.recon-bar {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  gap: 8px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 0;
+}
+.recon-bar .meter {
+  height: 6px;
+  background: var(--bg-3);
+  position: relative;
+}
+.recon-bar .meter > span {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, var(--accent-cool), var(--accent));
+}
+
+/* ------------------------------------------------------------------------- *
+ * Help overlay
+ * ------------------------------------------------------------------------- */
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+}
+.help-card {
+  width: min(520px, 92vw);
+  background: var(--bg-1);
+  border: 1px solid var(--line-strong);
+  padding: 24px;
+}
+.help-card h3 {
+  margin: 0 0 12px 0;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------------------- *
+ * Mobile (single-pane tabbed viewport switcher)
+ * ------------------------------------------------------------------------- */
+
+@media (max-width: 880px) {
+  :root {
+    --rail-w: 100%;
+    --dock-h: 38vh;
+  }
+  body { font-size: 13px; }
+  #topbar { flex-direction: column; align-items: flex-start; gap: 8px; padding: 8px 12px; }
+  #topbar-nav { width: 100%; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .breadcrumb { max-width: none; flex-wrap: wrap; }
+
+  #viewer.viewer-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "rail"
+      "stage";
+  }
+  #viewer.viewer-grid > #rail { grid-area: rail; max-height: 28vh; }
+  #viewer.viewer-grid > .viewport {
+    grid-area: stage;
+    display: none;
+  }
+  #viewer.viewer-grid > .viewport.mobile-active { display: flex; }
+
+  /* Mobile viewport selector lives at the top of the rail in mobile mode. */
+  .rail { flex-direction: row; flex-wrap: wrap; }
+  .rail-section.scrubber-section { flex-direction: column; width: 100%; }
+}
+
+.mobile-vp-tabs {
+  display: none;
+  width: 100%;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+}
+@media (max-width: 880px) {
+  .mobile-vp-tabs { display: flex; }
+  .mobile-vp-tabs button {
+    flex: 1;
+    background: transparent;
+    color: var(--fg-2);
+    border: none;
+    border-right: 1px solid var(--line);
+    padding: 8px 0;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    cursor: pointer;
+  }
+  .mobile-vp-tabs button.active {
+    background: var(--bg-1);
+    color: var(--accent);
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+}
