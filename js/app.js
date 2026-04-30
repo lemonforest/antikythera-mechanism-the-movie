@@ -63,30 +63,54 @@ async function boot() {
     onProgress: (pct, status) => bootProgress(pct, status),
   });
 
-  let bridgeReady = false;
   try {
     await bridge.boot();
-    bridgeReady = true;
-    bootLog("antikythera-spectral live", "ok");
   } catch (err) {
-    bootLog(`pyodide boot failed: ${err.message}`, "fail");
-    bootLog("falling back to JSON-ephemeris demo", "warn");
-    await bridge.bootMock();
-    bootLog("mock bridge active", "warn");
+    bootLog(`runtime failed to load: ${err.message}`, "fail");
+    showBootError(err);
+    return;
   }
-  bootProgress(95, bridgeReady ? "live" : "demo");
+  bootProgress(95, "live");
 
   // Hand the bridge to the rest of the app.
   window.__ak = bridge;          // useful for console poking
   mountUI(bridge);
 
-  bootProgress(100, bridgeReady ? "live" : "demo");
+  bootProgress(100, "live");
   // Reveal grid; hide boot.
   bootEl.hidden = true;
   viewerEl.hidden = false;
   dockEl.hidden = false;
-  railEl.hidden = false;
   document.body.classList.remove("state-loading");
+}
+
+function showBootError(err) {
+  bootStatusEl.textContent = "fail";
+  bootStatusEl.style.color = "var(--fail)";
+  const card = bootEl.querySelector(".boot-card");
+  if (!card) return;
+  const retry = document.createElement("div");
+  retry.className = "boot-retry";
+  retry.innerHTML = `
+    <p style="color: var(--fail); margin: 14px 0 6px 0; font-size: 12px;">
+      Couldn't load the Python runtime in this browser. Pyodide needs network
+      access to <code class="mono">cdn.jsdelivr.net</code> and a browser that
+      supports WebAssembly.
+    </p>
+    <p style="color: var(--fg-2); margin: 0 0 12px 0; font-size: 11px;">
+      ${escapeHtml(err.message || String(err))}
+    </p>
+    <button class="ghost-btn" type="button" id="boot-retry-btn">RELOAD</button>
+  `;
+  card.appendChild(retry);
+  document.getElementById("boot-retry-btn")?.addEventListener("click",
+    () => location.reload());
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 /* ----- mount everything once the bridge is ready -------------------------- */
