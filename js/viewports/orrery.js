@@ -16,7 +16,7 @@
  * showing planets in their actual physical relationships.
  * ------------------------------------------------------------------------- */
 
-import { setState } from "../state.js";
+import { setState, REFERENCE_JD } from "../state.js";
 
 const SIZE = 600;
 const CX = SIZE / 2, CY = SIZE / 2;
@@ -44,30 +44,74 @@ const HELIO_ORBIT_R = {
 };
 const HELIO_MOON_R = 22;   // moon orbits earth in helio frame
 
-/* Heliocentric mean motion for body-position math.
- * Earth's helio longitude ≈ Sun's apparent geocentric longitude − 180°, so
- * we just give Earth the same rate as the Sun's apparent motion with the
- * 180° offset applied at L0. */
+/* ------------------------------------------------------------------------- *
+ * Heliocentric body positions as PHASE MATH in the mechanism's frame.
+ *
+ * Same mathematical machinery the mechanism uses for its dial residues —
+ *   φ(t) = (t − REFERENCE_JD) / period_days  · 360°   (mod 360°)
+ * — applied here to heliocentric *sidereal* periods rather than the
+ * synodic period relations the bronze gears actually encode. The bodies'
+ * initial phases at REFERENCE_JD (~205 BCE encoder anchor) are baked
+ * once at module load by back-propagating modern J2000 mean longitudes.
+ *
+ * Why this and not just "J2000 + linear motion": both produce numerically
+ * identical wrap-around values, but anchoring at REFERENCE_JD makes the
+ * orrery render *in the mechanism's own time frame*, consistent with the
+ * Vector Time / HD-Time framing this site is exhibiting:
+ *     T(t) = [φ₁(t), φ₂(t), …, φₙ(t)],  φᵢ(t) = t mod pᵢ
+ * (UTLP / RFIP Documentation Suite §1.1). The helio orbits are just a
+ * different period-relation basis layered on the same modular flow.
+ * ------------------------------------------------------------------------- */
+
 const J2000 = 2451545.0;
-const HELIO_MEAN_MOTION = {
-  mercury: { rate: 4.092339,  L0: 252.2509 },
-  venus:   { rate: 1.602131,  L0: 181.9798 },
-  earth:   { rate: 0.985647,  L0: 100.4665 },   // = 280.4665 − 180
-  mars:    { rate: 0.524033,  L0: 355.4330 },
-  jupiter: { rate: 0.083091,  L0: 34.3515  },
-  saturn:  { rate: 0.033494,  L0: 50.0775  },
+const REF_DELTA = REFERENCE_JD - J2000;
+const wrap360 = (x) => ((x % 360) + 360) % 360;
+
+// Heliocentric sidereal periods (days) and mean longitudes at J2000 (deg).
+// Earth's helio longitude is the Sun's apparent geocentric longitude − 180°.
+const _HELIO_RATE_J2000 = {
+  mercury: { period:    87.9685, L_J2000: 252.2509 },
+  venus:   { period:   224.7008, L_J2000: 181.9798 },
+  earth:   { period:   365.2564, L_J2000: 100.4665 },
+  mars:    { period:   686.9796, L_J2000: 355.4330 },
+  jupiter: { period:  4332.5894, L_J2000:  34.3515 },
+  saturn:  { period: 10759.220,  L_J2000:  50.0775 },
 };
+
+// Bake the phase at REFERENCE_JD once. From here on, every helio render
+// just does `wrap360(L_ref + (jd - REFERENCE_JD)/P · 360)`.
+const HELIO_PHASE = Object.fromEntries(
+  Object.entries(_HELIO_RATE_J2000).map(([name, { period, L_J2000 }]) => [
+    name,
+    { period, L_ref: wrap360(L_J2000 + (360 / period) * REF_DELTA) },
+  ])
+);
+
+// Moon orbits Earth on the SIDEREAL month (~27.32 d), not the synodic
+// month (~29.53 d). Synodic is the Sun-relative cycle (new moon → new
+// moon); for drawing the moon's geometric position around Earth in the
+// helio frame, we want how long it takes the moon to return to the same
+// stellar background, which is sidereal.
+const SIDEREAL_MONTH_DAYS = 27.32166;
+const MOON_PHASE = {
+  period: SIDEREAL_MONTH_DAYS,
+  L_ref: 0,   // arbitrary visual anchor; only the phase rate matters here
+};
+
+function helioPhase(name, jd) {
+  const p = HELIO_PHASE[name];
+  if (!p) return 0;
+  return wrap360(p.L_ref + (360 / p.period) * (jd - REFERENCE_JD));
+}
+
+function moonPhaseAroundEarth(jd) {
+  return wrap360(MOON_PHASE.L_ref + (360 / MOON_PHASE.period) * (jd - REFERENCE_JD));
+}
 
 const PLANET_GLYPH = {
   mercury: "☿", venus: "♀", earth: "⊕", sun: "☉",
   mars: "♂", jupiter: "♃", saturn: "♄", moon: "☾",
 };
-
-const wrap360 = (x) => ((x % 360) + 360) % 360;
-function helioLon(name, jd) {
-  const p = HELIO_MEAN_MOTION[name];
-  return p ? wrap360(p.L0 + p.rate * (jd - J2000)) : 0;
-}
 
 export function mountOrrery(host, state, onChange, _bridge) {
   if (!host) return;
@@ -109,7 +153,7 @@ export function mountOrrery(host, state, onChange, _bridge) {
     if (h2) h2.textContent = `ORRERY · ${frame === "helio" ? "HELIOCENTRIC" : "GEOCENTRIC"}`;
     if (!readout) return;
     if (frame === "helio") {
-      const e = helioLon("earth", dial?.jd ?? 0);
+      const e = helioPhase("earth", dial?.jd ?? 0);
       readout.textContent = `Earth ${e.toFixed(1)}° helio`;
     } else {
       const sunDeg = dial?.bodies?.sun?.lonDeg ?? 0;
@@ -207,22 +251,21 @@ function drawHelioOrbits(svg) {
 }
 
 function drawHelioBodies(g, jd) {
-  const NS = "http://www.w3.org/2000/svg";
   g.innerHTML = "";
   let earthX = CX, earthY = CY;
   for (const [name, r] of Object.entries(HELIO_ORBIT_R)) {
-    const lon = helioLon(name, jd);
+    const lon = helioPhase(name, jd);
     const a = (lon - 90) * Math.PI / 180;
     const x = CX + r * Math.cos(a);
     const y = CY + r * Math.sin(a);
     drawBody(g, x, y, name, 5);
     if (name === "earth") { earthX = x; earthY = y; }
   }
-  /* Moon — orbits Earth. Phase angle from Sun-Earth-Moon geometry: moon
-   * position relative to Earth tracks the synodic month; we use a simple
-   * mean-motion approximation here just for visual placement. */
-  const moonSynodic = 360 / 29.530589;
-  const moonLon = wrap360((jd - J2000) * moonSynodic);
+  /* Moon orbit relative to Earth in the helio frame: sidereal month
+   * (~27.32 d), the period in which the moon returns to the same stellar
+   * background. Synodic (~29.53 d) is the Sun-relative cycle and isn't
+   * what you want when drawing geometric Earth-orbital position. */
+  const moonLon = moonPhaseAroundEarth(jd);
   const ma = (moonLon - 90) * Math.PI / 180;
   const mx = earthX + HELIO_MOON_R * Math.cos(ma);
   const my = earthY + HELIO_MOON_R * Math.sin(ma);
