@@ -9,16 +9,12 @@
 
 export const REFERENCE_JD = 1684595;     // ~205 BCE, encoder reference epoch (notebook §3.2)
 // The mechanism is HDC / modular arithmetic — `get_dial_state` is unbounded,
-// so JD can be wherever the user wants. The slider is a small floating window
-// (see SCRUBBER_HALF_RANGE below); these bounds only exist as a safety rail
-// against runaway play-loop drift. Calendar conversions and eclipse search
-// degrade gracefully past their internal bounds (~±10000 yr) — panels return
-// empty results instead of breaking.
+// so JD can be wherever the user wants. These bounds only exist as a safety
+// rail against runaway play-loop drift. Calendar conversions and eclipse
+// search degrade gracefully past their internal bounds (~±10000 yr): panels
+// return empty results instead of breaking, and dial state stays correct.
 export const JD_MIN       = -34850000;   // ~100000 BCE
 export const JD_MAX       = 38400000;    // ~100000 CE
-// Slider half-range: ±20 years (~7305 days) around current JD. Each rail-
-// pixel covers ~80 days at this scale, vs ~10000 days for a 5000-yr slider.
-export const SCRUBBER_HALF_RANGE = 7305;
 
 // JD for the current civil date, computed at boot so it stays fresh.
 export function todayJD() {

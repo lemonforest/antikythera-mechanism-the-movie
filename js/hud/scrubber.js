@@ -1,29 +1,28 @@
 /* ------------------------------------------------------------------------- *
  * hud/scrubber.js — left-rail time controls.
  *
- * The JD scrubber is a small floating window around the current JD
- * (±SCRUBBER_HALF_RANGE days). The window auto-recenters whenever JD
- * changes by anything other than the user dragging the slider itself —
- * so click ±yr / ±Met / Today / Epoch / type a year, and the slider
- * stays usable at high resolution.
+ * No slider any more. The mechanism is HDC; a 1D scalar slider was the
+ * wrong shape for navigating its modular state. The step buttons (±d, ±mo,
+ * ±yr, ±Met, ±Sar) are the navigation, plus a year-jump input for warps.
  *
- * Why: the mechanism is HDC / modular — there's no meaningful "absolute"
- * JD position to point at. What's useful is fine scrubbing around your
- * current focus. ±20 yr at ~80 days/pixel is a comfortable Saros-scale
- * window; the buttons handle larger jumps.
+ * Each step button is hold-to-repeat: tap = single increment, hold = an
+ * initial increment + auto-repeat after a 350 ms delay at ~17 fires/sec.
+ * Implemented with pointer events for unified mouse + touch handling.
  * ------------------------------------------------------------------------- */
 
-import { setPlaying, onChange, SCRUBBER_HALF_RANGE, JD_MIN, JD_MAX } from "../state.js";
+import { setPlaying, onChange, JD_MIN, JD_MAX } from "../state.js";
 
 // Approximate Gregorian-year ↔ JD conversion (good enough for the year-jump
 // input; calendar code in the bridge produces the authoritative readout).
 const J2000 = 2451545.0;
 const yearToJD = (year) => J2000 + (year - 2000) * 365.25;
 
+const HOLD_DELAY_MS  = 350;   // wait before auto-repeat starts
+const HOLD_PERIOD_MS = 60;    // auto-repeat tick (~17/sec)
+
 export function mountScrubber(railEl, state, setState, _bridge) {
   if (!railEl) return;
 
-  const scrubber = railEl.querySelector("#jd-scrubber");
   const readout  = railEl.querySelector("#jd-readout");
   const playBtn  = railEl.querySelector('[data-act="play"]');
   const backBtn  = railEl.querySelector('[data-act="back"]');
@@ -33,21 +32,7 @@ export function mountScrubber(railEl, state, setState, _bridge) {
   const yearInp  = railEl.querySelector("#year-jump");
   const yearGo   = railEl.querySelector("#year-jump-go");
 
-  let dragging = false;
-
-  /* ---- input → state -------------------------------------------------- */
-
-  if (scrubber) {
-    setSliderWindow(state.jd);
-    scrubber.addEventListener("input", () => {
-      setState({ jd: parseFloat(scrubber.value) });
-    });
-    // Mark drag start/end so paint() knows whether to recenter the window.
-    scrubber.addEventListener("pointerdown",   () => { dragging = true; });
-    scrubber.addEventListener("pointerup",     () => { dragging = false; recenter(); });
-    scrubber.addEventListener("pointercancel", () => { dragging = false; recenter(); });
-    scrubber.addEventListener("blur",          () => { dragging = false; recenter(); });
-  }
+  /* ---- play / pause / speed ------------------------------------------- */
 
   if (playBtn) {
     playBtn.addEventListener("click", () => {
@@ -57,32 +42,32 @@ export function mountScrubber(railEl, state, setState, _bridge) {
     });
   }
 
-  backBtn?.addEventListener("click", () => setState({ jd: state.jd - 1 }));
-  fwdBtn ?.addEventListener("click", () => setState({ jd: state.jd + 1 }));
-
   if (speedSel) {
     speedSel.value = String(state.speed);
     speedSel.addEventListener("change", () =>
       setState({ speed: parseFloat(speedSel.value) }));
   }
 
+  /* ---- hold-to-repeat step buttons ------------------------------------ */
+
+  if (backBtn) makeRepeatable(backBtn, () => setState({ jd: clamp(state.jd - 1) }));
+  if (fwdBtn)  makeRepeatable(fwdBtn,  () => setState({ jd: clamp(state.jd + 1) }));
+
   stepBtns.forEach((b) => {
-    b.addEventListener("click", () => {
-      const dt = parseFloat(b.dataset.step);
-      if (!Number.isNaN(dt)) setState({ jd: state.jd + dt });
-    });
+    const dt = parseFloat(b.dataset.step);
+    if (Number.isNaN(dt)) return;
+    makeRepeatable(b, () => setState({ jd: clamp(state.jd + dt) }));
   });
 
-  // Year-jump input: type a year, press Enter (or click ⏎) to warp the JD.
-  // Negative numbers are BCE (proleptic Julian, e.g. -205 = 206 BCE).
+  /* ---- year-jump ------------------------------------------------------ */
+
   function jumpToYear() {
     if (!yearInp) return;
     const raw = yearInp.value.trim();
     if (!raw) return;
     const year = parseFloat(raw);
     if (Number.isNaN(year)) return;
-    const jd = clamp(yearToJD(year), JD_MIN, JD_MAX);
-    setState({ jd });
+    setState({ jd: clamp(yearToJD(year)) });
     yearInp.value = "";
     yearInp.blur();
   }
@@ -93,28 +78,7 @@ export function mountScrubber(railEl, state, setState, _bridge) {
 
   /* ---- state → UI ----------------------------------------------------- */
 
-  function setSliderWindow(jd) {
-    if (!scrubber) return;
-    const lo = Math.max(JD_MIN, Math.round(jd - SCRUBBER_HALF_RANGE));
-    const hi = Math.min(JD_MAX, Math.round(jd + SCRUBBER_HALF_RANGE));
-    scrubber.min = String(lo);
-    scrubber.max = String(hi);
-    scrubber.value = String(Math.round(jd));
-  }
-
-  function recenter() {
-    setSliderWindow(state.jd);
-  }
-
   function paint(s) {
-    if (scrubber) {
-      if (dragging) {
-        // Don't slide the window during a drag — keeps the thumb stable.
-        scrubber.value = String(Math.round(s.jd));
-      } else {
-        setSliderWindow(s.jd);
-      }
-    }
     if (readout) readout.textContent = `JD ${s.jd.toFixed(1)}`;
     if (playBtn) playBtn.textContent = s.playing ? "❚❚" : "▶";
   }
@@ -123,4 +87,46 @@ export function mountScrubber(railEl, state, setState, _bridge) {
   onChange(paint);
 }
 
-function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function clamp(v) { return Math.max(JD_MIN, Math.min(JD_MAX, v)); }
+
+/* ------------------------------------------------------------------------- *
+ * Hold-to-repeat helper: pointerdown fires `fn` immediately, then after a
+ * delay starts an auto-repeat. Pointerup / cancel / leave / blur stops it.
+ * Keyboard (Enter/Space) fires `fn` once — no auto-repeat for a11y.
+ * ------------------------------------------------------------------------- */
+
+function makeRepeatable(btn, fn) {
+  let delayTimer = null;
+  let repeatTimer = null;
+
+  const start = () => {
+    fn();
+    delayTimer = setTimeout(() => {
+      repeatTimer = setInterval(fn, HOLD_PERIOD_MS);
+    }, HOLD_DELAY_MS);
+  };
+  const stop = () => {
+    if (delayTimer)  { clearTimeout(delayTimer);   delayTimer  = null; }
+    if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
+  };
+
+  btn.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    e.preventDefault();
+    btn.setPointerCapture?.(e.pointerId);
+    start();
+  });
+  btn.addEventListener("pointerup",     stop);
+  btn.addEventListener("pointercancel", stop);
+  btn.addEventListener("pointerleave",  stop);
+  btn.addEventListener("blur",          stop);
+
+  // Keyboard activation — single fire, no auto-repeat (browsers already
+  // handle key auto-repeat at the OS level via repeated keydown events).
+  btn.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fn();
+    }
+  });
+}
