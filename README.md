@@ -80,6 +80,33 @@ the mechanism is a discrete dynamical system on a torus, the package
 treats it as one, and this site is the interactive viewport into both
 that fact and its consequences.
 
+## Lineage — where this fits in the PHYRFLY Opus
+
+This site is the ancient end of a longer thread laid out in
+[**The PHYRFLY Opus: A Unified Standard for Hyperdimensional Time Vectors,
+Spectrally Isolated Coordination, Neural Hierarchies, and Distributed
+Proprioception**](https://www.tdcommons.org/dpubs_series/9166/) (Steven
+Kirkland, *Technical Disclosure Commons*, 2026-01-11). The Opus's central
+move is treating time as a **hyperdimensional vector** rather than a
+scalar — coordinated across nodes by phase-locked period relations, not
+by a master clock — and unifies three protocols around that:
+
+- **UTLP** (Unified Time-Locking Protocol) — distributed phase-lock timing
+  for hardware nodes where each clock reads `atomic_time = local_time +
+  time_offset`, with the offset emerging from local consensus among peers
+  ([executive summary in mlehaptics](https://github.com/lemonforest/mlehaptics/blob/main/docs/misc/UTLP_Executive_Summary.md))
+- **RFIP** — Reference-Frame-Independent Positioning
+- **SMSP** — Spectral Multi-Stratum Protocol
+
+The Antikythera mechanism enters the Opus as a **2100-year-old existence
+proof** for the HD-Time half of the claim: a *resonant HDC object* whose
+state is genuinely the joint angles of thirteen coprime-indexed period
+dials, not any one scalar projection of them. Reading the front-dial
+pointer back out as an ecliptic longitude is *projection*, not state.
+Pinning that end of the thread down — interactively, in the browser, with
+no kernel data — is how the abstract HD-Time claim becomes something you
+can grab and scrub.
+
 ## What's in it
 
 Five viewports, in a 2×2 + bottom-row layout (each maximisable; the bottom
