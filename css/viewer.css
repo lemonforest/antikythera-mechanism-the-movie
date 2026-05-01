@@ -191,14 +191,35 @@ code   { font-family: var(--font-mono); color: var(--accent); }
 }
 
 .boot-card {
-  width: min(560px, 92vw);
+  width: min(620px, 92vw);
   background: var(--bg-1);
   border: 1px solid var(--line-strong);
-  padding: 22px 24px;
+  padding: 22px 26px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
+
+.boot-h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.boot-tagline {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--fg-1);
+}
+.boot-tagline a {
+  color: var(--accent-cool);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--accent-cool);
+}
+.boot-tagline a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 .boot-head {
   display: flex;

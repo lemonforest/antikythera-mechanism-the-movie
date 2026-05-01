@@ -3,8 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Antikythera — Resonant HDC Instrument</title>
-  <meta name="description" content="Interactive Antikythera mechanism — front and back dials, classical sky view, geocentric orrery, and the periphery-rule gear DAG. Driven by antikythera-spectral in Pyodide.">
+
+  <title>Antikythera Mechanism — Interactive HDC Instrument</title>
+  <meta name="description" content="An interactive Antikythera mechanism in your browser — five live viewports (cosmos planetarium, Metonic and Saros spirals, classical sky, geocentric orrery, periphery-rule gear DAG) driven by antikythera-spectral via Pyodide. Pure modular arithmetic — no ephemerides required.">
+  <meta name="author" content="Steven Kirkland">
+  <meta name="keywords" content="Antikythera mechanism, antikythera-spectral, Pyodide, phase-space geometry, dynamical systems, archaeoastronomy, Saros, Metonic, hyperdimensional computing, modular arithmetic, ancient astronomy">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://lemonforest.github.io/antikythera-mechanism-the-movie/">
+
+  <!-- Open Graph (Facebook, LinkedIn, Discord, …) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://lemonforest.github.io/antikythera-mechanism-the-movie/">
+  <meta property="og:site_name" content="Antikythera Mechanism — the Movie">
+  <meta property="og:title" content="Antikythera Mechanism — Interactive HDC Instrument">
+  <meta property="og:description" content="The Antikythera mechanism, live in your browser. Pure modular arithmetic — no ephemerides required.">
+
+  <!-- Twitter cards -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Antikythera Mechanism — Interactive HDC Instrument">
+  <meta name="twitter:description" content="The Antikythera mechanism, live in your browser. Pure modular arithmetic — no ephemerides required.">
+
+  <!-- schema.org WebApplication for richer search snippets -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Antikythera Mechanism — the Movie",
+    "url": "https://lemonforest.github.io/antikythera-mechanism-the-movie/",
+    "applicationCategory": "EducationApplication",
+    "operatingSystem": "Web Browser",
+    "browserRequirements": "Requires JavaScript and WebAssembly",
+    "description": "An interactive realisation of the Antikythera mechanism running entirely in the browser via Pyodide and antikythera-spectral. Five live viewports + ten research panels expose the mechanism's discrete dynamical system on a torus.",
+    "creator": { "@type": "Person", "name": "Steven Kirkland" },
+    "isAccessibleForFree": true,
+    "license": "https://unlicense.org/"
+  }
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,9 +71,22 @@
     </nav>
   </header>
 
-  <!-- Boot / loading screen, shown until Pyodide + bridge are ready (or mock falls back). -->
+  <!-- Boot / loading screen, shown until Pyodide + bridge are ready.
+       Doubles as a pre-rendered shell for crawlers and as something to read
+       during the ~10-30 s Pyodide cold-load. The descriptive paragraphs here
+       are the static, JS-free face of the page. -->
   <section id="boot" aria-live="polite">
     <div class="boot-card">
+      <h2 class="boot-h2">Antikythera Mechanism</h2>
+      <p class="boot-tagline">
+        An interactive in-browser realisation of the Antikythera mechanism,
+        driven by <a href="https://pypi.org/project/antikythera-spectral/" rel="noopener">antikythera-spectral</a>
+        running in Pyodide. Five live viewports, ten research panels,
+        ~10,000 years of fine-grained navigation, and no kernel data
+        required — the engine is pure modular arithmetic over the
+        mechanism's encoded period relations.
+      </p>
+
       <div class="boot-head">
         <span class="mono">antikythera-spectral</span>
         <span id="boot-status" class="mono dim">cold</span>
@@ -48,8 +95,9 @@
       <ol id="boot-log" class="phase-log mono"></ol>
       <p class="boot-meta dim">
         Loads Pyodide and pip-installs <code class="mono">antikythera-spectral</code> in your browser.
-        First visit may take ~10–30 s; subsequent visits are cached. If it fails,
-        a JSON-ephemeris fallback boots the UI in demo mode.
+        First visit may take ~10–30 s; subsequent visits are cached. The mechanism's
+        modular arithmetic — Metonic 235/19, Saros 223/19, etc. — runs entirely
+        client-side. <a href="https://github.com/lemonforest/antikythera-mechanism-the-movie#readme" rel="noopener">README on GitHub</a>.
       </p>
     </div>
   </section>
@@ -104,8 +152,7 @@
         </div>
       </div>
       <div class="rail-section scrubber-section">
-        <span class="rail-label dim">JD scrub · ±20 yr window</span>
-        <input id="jd-scrubber" type="range" step="1" value="1684595">
+        <span class="rail-label dim">current</span>
         <span id="jd-readout" class="mono">JD 1684595</span>
         <span class="rail-label dim" style="margin-top:6px">jump to year</span>
         <div style="display:flex; gap:6px; width:100%">
