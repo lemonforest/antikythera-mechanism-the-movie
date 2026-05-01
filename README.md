@@ -91,12 +91,12 @@ move is treating time as a **hyperdimensional vector** rather than a
 scalar — coordinated across nodes by phase-locked period relations, not
 by a master clock — and unifies three protocols around that:
 
-- **UTLP** (Unified Time-Locking Protocol) — distributed phase-lock timing
+- **UTLP** — Universal Time Lord Protocol — distributed phase-lock timing
   for hardware nodes where each clock reads `atomic_time = local_time +
   time_offset`, with the offset emerging from local consensus among peers
   ([executive summary in mlehaptics](https://github.com/lemonforest/mlehaptics/blob/main/docs/misc/UTLP_Executive_Summary.md))
-- **RFIP** — Reference-Frame-Independent Positioning
-- **SMSP** — Spectral Multi-Stratum Protocol
+- **RFIP** — Reference-Frame Independent Positioning
+- **SMSP** — Synchronized Multimodal Score Protocol
 
 The Antikythera mechanism enters the Opus as a **2100-year-old existence
 proof** for the HD-Time half of the claim: a *resonant HDC object* whose
