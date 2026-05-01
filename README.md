@@ -58,6 +58,21 @@ The site exposes that geometry directly:
 - The `ECLIPSES` panel surfaces Saros offsets and anchor labels — quasi-
   periodic recurrence in discrete time, visible as the spiral wrapping.
 
+The JD scrubber in the rail reflects this geometry too. It's deliberately
+*not* a 1D tape across all of time — that would make a scalar the object
+of attention and treat the JD as if it were the mechanism's real coordinate.
+Instead it's a small floating window (±20 yr) around your current focus,
+sliding along as you advance via the step buttons or year-jump. Because
+the mechanism is HDC — its true state is the torus residue, not the
+JD — **a scalar can't break our HDC object.** The math is modular and
+closed-form, so the device produces well-defined output for any JD you
+throw at it; the slider is just a viewport into the flow, not a position
+on a tape. Practical consequence: warp the scrubber to year 50000 CE or
+100000 BCE and the dials still rotate correctly. Calendar and
+eclipse-search panels degrade gracefully past their internal year limits,
+but `STATE` and the dial visuals don't care — they're operating on the
+mechanism's own coordinates, not on the scalar.
+
 So `phase-space-geometry` and `dynamical-systems` aren't strapped-on tags:
 the mechanism is a discrete dynamical system on a torus, the package
 treats it as one, and this site is the interactive viewport into both
