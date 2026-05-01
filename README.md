@@ -1,10 +1,12 @@
 # Antikythera Mechanism — the Movie
 
+[![Antikythera Mechanism — the Movie](antikythera-mechanism-the-movie.PNG)](https://lemonforest.github.io/antikythera-mechanism-the-movie/)
+
 An interactive, in-browser realisation of the Antikythera mechanism, driven by
 [`antikythera-spectral`](https://pypi.org/project/antikythera-spectral/) running in
-Pyodide. Five live viewports, ten research panels, ~10,000 years of JD scrubbing,
-and no kernel data required — the engine is pure modular arithmetic over the
-mechanism's encoded period relations.
+Pyodide. Five live viewports, ten research panels, no kernel data required —
+the engine is pure modular arithmetic over the mechanism's encoded period
+relations.
 
 ▸ **Live site:** <https://lemonforest.github.io/antikythera-mechanism-the-movie/>
 

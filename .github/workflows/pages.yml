@@ -42,6 +42,10 @@ jobs:
           mkdir -p _site
           cp index.html _site/
           cp -r css js data _site/
+          # OG / social-card images live at the repo root.
+          for img in *.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.svg *.webp; do
+            [ -f "$img" ] && cp "$img" _site/
+          done
           # Optional public extras. Use cp -f so the workflow doesn't fail if missing.
           [ -f LICENSE ] && cp LICENSE _site/ || true
           echo "--- _site contents ---"
