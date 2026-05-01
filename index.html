@@ -104,9 +104,14 @@
         </div>
       </div>
       <div class="rail-section scrubber-section">
-        <span class="rail-label dim">JD scrub · 5000 BCE → 5000 CE</span>
-        <input id="jd-scrubber" type="range" min="-105192" max="3547216" step="1" value="1684595">
+        <span class="rail-label dim">JD scrub · ±20 yr window</span>
+        <input id="jd-scrubber" type="range" step="1" value="1684595">
         <span id="jd-readout" class="mono">JD 1684595</span>
+        <span class="rail-label dim" style="margin-top:6px">jump to year</span>
+        <div style="display:flex; gap:6px; width:100%">
+          <input id="year-jump" type="number" class="rail-select" placeholder="-205" style="flex:1; min-width:0">
+          <button id="year-jump-go" class="rail-btn small" type="button" title="Go (Enter)">⏎</button>
+        </div>
       </div>
     </aside>
 

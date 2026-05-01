@@ -8,11 +8,17 @@
  * ------------------------------------------------------------------------- */
 
 export const REFERENCE_JD = 1684595;     // ~205 BCE, encoder reference epoch (notebook §3.2)
-// Upper bound is ~5000 CE; the package's calendar/eclipse internals start
-// erroring beyond ~10000 CE so we stay comfortably inside that. Lower bound
-// is ~5000 BCE; same reasoning for the deep past.
-export const JD_MIN       = -105192;     // ~5000 BCE
-export const JD_MAX       = 3547216;     // ~5000 CE
+// The mechanism is HDC / modular arithmetic — `get_dial_state` is unbounded,
+// so JD can be wherever the user wants. The slider is a small floating window
+// (see SCRUBBER_HALF_RANGE below); these bounds only exist as a safety rail
+// against runaway play-loop drift. Calendar conversions and eclipse search
+// degrade gracefully past their internal bounds (~±10000 yr) — panels return
+// empty results instead of breaking.
+export const JD_MIN       = -34850000;   // ~100000 BCE
+export const JD_MAX       = 38400000;    // ~100000 CE
+// Slider half-range: ±20 years (~7305 days) around current JD. Each rail-
+// pixel covers ~80 days at this scale, vs ~10000 days for a 5000-yr slider.
+export const SCRUBBER_HALF_RANGE = 7305;
 
 // JD for the current civil date, computed at boot so it stays fresh.
 export function todayJD() {
