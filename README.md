@@ -69,7 +69,11 @@ the mechanism is HDC — its true state is the torus residue, not the
 JD — **a scalar can't break our HDC object.** The math is modular and
 closed-form, so the device produces well-defined output for any JD you
 throw at it; the slider is just a viewport into the flow, not a position
-on a tape. Practical consequence: warp the scrubber to year 50000 CE or
+on a tape.
+
+> "A scalar counter is atomic — you can't 'partially lock' it. There's
+> no phase decomposition to exploit."
+> — *UTLP / RFIP Documentation Suite*, Supplement S4 ([source](https://github.com/lemonforest/mlehaptics/blob/main/docs/misc/UTLP_RFIP_Complete_Documentation_Suite.md)) Practical consequence: warp the scrubber to year 50000 CE or
 100000 BCE and the dials still rotate correctly. Calendar and
 eclipse-search panels degrade gracefully past their internal year limits,
 but `STATE` and the dial visuals don't care — they're operating on the
@@ -89,7 +93,17 @@ Proprioception**](https://www.tdcommons.org/dpubs_series/9166/) (Steven
 Kirkland, *Technical Disclosure Commons*, 2026-01-11). The Opus's central
 move is treating time as a **hyperdimensional vector** rather than a
 scalar — coordinated across nodes by phase-locked period relations, not
-by a master clock — and unifies three protocols around that:
+by a master clock. From the
+[UTLP / RFIP Documentation Suite](https://github.com/lemonforest/mlehaptics/blob/main/docs/misc/UTLP_RFIP_Complete_Documentation_Suite.md), §1.1:
+
+> "Time is represented as an N-tuple of phase values, where each phase
+> rotates through a prime-length cycle: φᵢ(t) = t mod pᵢ"
+
+That formula is exactly what the Antikythera computes — its thirteen
+dials are `t mod pᵢ` (or `t mod` a small composite) for the period
+relations the mechanism encodes. Open the `STATE` dock tab and you're
+reading off `T(t)` for the bronze instance. The Opus unifies three
+protocols around that representation:
 
 - **UTLP** — Universal Time Lord Protocol — distributed phase-lock timing
   for hardware nodes where each clock reads `atomic_time = local_time +
