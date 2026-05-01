@@ -123,7 +123,6 @@ export function mountOrrery(host, state, onChange, _bridge) {
 
   const orreryPanel = host.closest(".viewport");
   const readout     = document.querySelector('.panel-header [data-vp="orrery"]');
-  const h2          = document.getElementById("orrery-h2");
 
   /* Wire the geo/helio frame toggle. */
   orreryPanel?.querySelectorAll("[data-orr-frame]").forEach((btn) => {
@@ -150,7 +149,6 @@ export function mountOrrery(host, state, onChange, _bridge) {
   }
 
   function paintReadout(frame, dial) {
-    if (h2) h2.textContent = `ORRERY · ${frame === "helio" ? "HELIOCENTRIC" : "GEOCENTRIC"}`;
     if (!readout) return;
     if (frame === "helio") {
       const e = helioPhase("earth", dial?.jd ?? 0);

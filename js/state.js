@@ -40,7 +40,7 @@ export const state = {
   view: "front",                  // mobile single-pane focus
   maximized: null,                // null | "front" | "back" | "sky" | "orrery" | "dag"
   dagCollapsed: false,            // collapse the bottom DAG row → 2×2 dials get more space
-  orreryFrame: "geo",             // "geo" | "helio" — which reference frame the orrery uses
+  orreryFrame: "helio",           // "geo" | "helio" — which reference frame the orrery uses
   observer: { lat: 35.86, lon: 23.31 }, // Antikythera island
   dockTab: "state",
   dockCollapsed: false,
@@ -92,7 +92,7 @@ function syncHash() {
     p.set("tab", state.dockTab);
     if (state.maximized) p.set("max", state.maximized);
     if (state.dagCollapsed) p.set("dagc", "1");
-    if (state.orreryFrame && state.orreryFrame !== "geo") p.set("orf", state.orreryFrame);
+    if (state.orreryFrame && state.orreryFrame !== "helio") p.set("orf", state.orreryFrame);
     history.replaceState(null, "", "#" + p.toString());
   }, 50);
 }
