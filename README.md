@@ -23,6 +23,46 @@ So this site loads Pyodide once (~6 MB, cached), pip-installs the package
 (~200 KB wheel), and from then on every dial readout you see is what the
 mechanism *itself* would compute, all the way out to 5000 CE.
 
+## Why it's also phase-space geometry and dynamical systems
+
+The mechanism's state is an N-tuple of dial angles — one per independent
+cycle — so its phase space is literally a torus *T*<sup>N</sup>. A crank turn
+is a translation on that torus, and the gear ratios fix the integer lattice
+*Z*<sup>N</sup> → *R*<sup>N</sup> that the mechanism's discrete-time flow
+lives on. The package's hypothesis battery operationalises that view:
+
+- **B-H1** "Every cycle is an element of *C*[Z/D<sub>Ant</sub>Z] for some
+  *D*<sub>Ant</sub>" — the toroidal coordinate ring
+- **B-H2** "Crank-turn = single generator σ<sub>day</sub> of Z/DZ (a unit)" —
+  the day-tick is a unit-element generator of the lattice
+- **C-H2** "Aliasing horizon = spiral-dial return-to-start (torus-fold)" —
+  Poincaré-recurrence on the spiral dials
+- **D-H2** "All non-pin-and-slot gear trains are T-symmetric" — time-reversal
+  structure of the flow
+
+The site exposes that geometry directly:
+
+- The `STATE` dock tab is a tabular live view of the toroidal coordinates
+  (residue · modulus · angle · cycle-period for all 13 dials).
+- The **Metonic 235-cell** and **Saros 223-cell** spiral viewports literally
+  unfold the torus over time — Archimedean spirals where cell index = phase
+  position in the cycle.
+- The **continuous ↔ intermittent** regime toggle in the rail surfaces a
+  dissipative-vs-stable distinction: continuous operation accumulates
+  ~13°/19yr drift (G-H1a, FAIL), intermittent re-zeroing at calendar anchors
+  bounds the drift (G-H1b, PASS) — the operator is a discrete-time feedback
+  controller stabilising the orbit on the lattice.
+- The **uniform / epicycle / equant** orrery toggle walks through three
+  reductions of planetary dynamics, with characteristic peak errors of
+  180° / 51° / 49° — three Greek toy models compared against modern truth.
+- The `ECLIPSES` panel surfaces Saros offsets and anchor labels — quasi-
+  periodic recurrence in discrete time, visible as the spiral wrapping.
+
+So `phase-space-geometry` and `dynamical-systems` aren't strapped-on tags:
+the mechanism is a discrete dynamical system on a torus, the package
+treats it as one, and this site is the interactive viewport into both
+that fact and its consequences.
+
 ## What's in it
 
 Five viewports, in a 2×2 + bottom-row layout (each maximisable; the bottom
