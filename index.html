@@ -198,11 +198,6 @@
       <div class="panel-header">
         <h2>SKY · 35.86°N</h2>
         <div class="header-controls">
-          <div class="seg-control" role="group" aria-label="Truth source">
-            <button data-sky="ancient" class="seg-btn active" type="button" aria-pressed="true">ancient</button>
-            <button data-sky="modern"  class="seg-btn"        type="button" aria-pressed="false">DE441</button>
-            <button data-sky="diff"    class="seg-btn"        type="button" aria-pressed="false">Δ</button>
-          </div>
           <span class="vp-readout mono dim" data-vp="sky">—</span>
         </div>
       </div>
@@ -211,8 +206,12 @@
 
     <section id="vp-orrery" class="panel viewport" aria-label="Orrery — Geocentric vs Heliocentric">
       <div class="panel-header">
-        <h2>ORRERY · GEOCENTRIC</h2>
+        <h2 id="orrery-h2">ORRERY · GEOCENTRIC</h2>
         <div class="header-controls">
+          <div class="seg-control" role="group" aria-label="Frame of reference">
+            <button data-orr-frame="geo"   class="seg-btn active" type="button" aria-pressed="true"  title="Earth-centred (Hipparchian / Antikythera)">geo</button>
+            <button data-orr-frame="helio" class="seg-btn"        type="button" aria-pressed="false" title="Sun-centred (Copernican)">helio</button>
+          </div>
           <div class="seg-control" role="group" aria-label="Greek planetary model">
             <button data-orr="uniform"  class="seg-btn"        type="button" aria-pressed="false" title="~180° peak">uniform</button>
             <button data-orr="epicycle" class="seg-btn active" type="button" aria-pressed="true"  title="~51° peak">epicycle</button>

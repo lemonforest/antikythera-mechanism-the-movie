@@ -40,6 +40,7 @@ export const state = {
   view: "front",                  // mobile single-pane focus
   maximized: null,                // null | "front" | "back" | "sky" | "orrery" | "dag"
   dagCollapsed: false,            // collapse the bottom DAG row → 2×2 dials get more space
+  orreryFrame: "geo",             // "geo" | "helio" — which reference frame the orrery uses
   observer: { lat: 35.86, lon: 23.31 }, // Antikythera island
   dockTab: "state",
   dockCollapsed: false,
@@ -72,6 +73,7 @@ export function readHash() {
   const tab = params.get("tab");     if (tab)   state.dockTab = tab;
   const max = params.get("max");     if (max)   state.maximized = max === "none" ? null : max;
   if (params.get("dagc") === "1") state.dagCollapsed = true;
+  const orf = params.get("orf"); if (orf === "geo" || orf === "helio") state.orreryFrame = orf;
 }
 
 let hashTimer = null;
@@ -90,6 +92,7 @@ function syncHash() {
     p.set("tab", state.dockTab);
     if (state.maximized) p.set("max", state.maximized);
     if (state.dagCollapsed) p.set("dagc", "1");
+    if (state.orreryFrame && state.orreryFrame !== "geo") p.set("orf", state.orreryFrame);
     history.replaceState(null, "", "#" + p.toString());
   }, 50);
 }
