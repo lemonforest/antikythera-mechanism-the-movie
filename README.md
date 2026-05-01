@@ -12,18 +12,18 @@ relations.
 
 ## Why it's neat
 
-Plug a date into the scrubber, and you get a moon phase that's accurate to about
-the right day, eclipses keyed to actual Saros offsets, parallel readouts in
-Gregorian / Julian / Athenian / Olympiad calendars, and dial residues for all
-thirteen of the mechanism's encoded cycles — none of which require an ephemeris.
-The `antikythera-spectral` package (v0.2.0+) treats kernel data as
+Pick any year — past or future — and you get a moon phase that's accurate to
+about the right day, eclipses keyed to actual Saros offsets, parallel readouts
+in Gregorian / Julian / Athenian / Olympiad calendars, and dial residues for
+all thirteen of the mechanism's encoded cycles — none of which require an
+ephemeris. The `antikythera-spectral` package (v0.2.0+) treats kernel data as
 *validation-only*: real cross-checks against DE441 are done in the package's
 test suite, but the device's own predictions come from the same modular
 arithmetic the bronze gears would have computed in 200 BCE.
 
 So this site loads Pyodide once (~6 MB, cached), pip-installs the package
 (~200 KB wheel), and from then on every dial readout you see is what the
-mechanism *itself* would compute, all the way out to 5000 CE.
+mechanism *itself* would compute, ±100,000 years from the encoder's epoch.
 
 ## Why it's also phase-space geometry and dynamical systems
 
@@ -66,16 +66,15 @@ The site exposes that geometry directly:
 - The `ECLIPSES` panel surfaces Saros offsets and anchor labels — quasi-
   periodic recurrence in discrete time, visible as the spiral wrapping.
 
-The JD scrubber in the rail reflects this geometry too. It's deliberately
-*not* a 1D tape across all of time — that would make a scalar the object
+The rail's time controls reflect this geometry too. There's deliberately
+*no* 1D scrubber across all of time — that would make a scalar the object
 of attention and treat the JD as if it were the mechanism's real coordinate.
-Instead it's a small floating window (±20 yr) around your current focus,
-sliding along as you advance via the step buttons or year-jump. Because
-the mechanism is HDC — its true state is the torus residue, not the
-JD — **a scalar can't break our HDC object.** The math is modular and
-closed-form, so the device produces well-defined output for any JD you
-throw at it; the slider is just a viewport into the flow, not a position
-on a tape.
+Instead you advance via hold-to-repeat ±d / ±mo / ±yr / ±Met / ±Sar buttons
+and a year-jump that warps to any era. Because the mechanism is HDC — its
+true state is the torus residue, not the JD — **a scalar can't break our
+HDC object.** The math is modular and closed-form, so the device produces
+well-defined output for any JD you throw at it; the time controls are
+viewports into the flow, not positions on a tape.
 
 > "A scalar counter is atomic — you can't 'partially lock' it. There's
 > no phase decomposition to exploit."
@@ -220,7 +219,10 @@ auto-bump PR when a newer release is available.
 - [`antikythera-spectral`](https://github.com/lemonforest/mlehaptics/tree/main/docs/antikythera-maths/antikythera-spectral/python)
   — the engine that does all the actual mechanism math
 - The [research notebook](https://github.com/lemonforest/mlehaptics/blob/main/docs/antikythera-maths/antikythera_spectral_research_notebook.md)
-  drives the 31-row hypothesis battery
+  drives the 31-row hypothesis battery and walks through the **cyclic-group
+  reconstruction** of the mechanism's missing gear trains — modular
+  arithmetic over ℤ/nℤ rather than spatial CAD, which is why the device
+  here can run without ephemerides at all.
 - [Freeth et al. 2021 (Nature)](https://www.nature.com/articles/s41598-021-84310-w)
   — the Cosmos planetarium reconstruction
 - Visual language extends

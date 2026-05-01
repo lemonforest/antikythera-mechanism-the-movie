@@ -21,7 +21,9 @@ const CATEGORY_LABEL = {
 export function mountHypothPanel(host, state, onChange, bridge) {
   if (!host) return;
   host.innerHTML = `
-    <h3>HYPOTHESIS BATTERY · 31 rows</h3>
+    <h3>HYPOTHESIS BATTERY · 31 rows
+      <a href="https://github.com/lemonforest/mlehaptics/blob/main/docs/antikythera-maths/antikythera_spectral_research_notebook.md"
+         rel="noopener" class="panel-link">research notebook ↗</a></h3>
     <p id="hypoth-meta" class="dim mono"></p>
     <table class="hypoth-table" id="hypoth-table">
       <thead><tr><th style="width:8%">id</th><th style="width:14%">cat</th><th>statement</th><th style="width:14%">status</th></tr></thead>
