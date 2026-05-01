@@ -57,6 +57,12 @@ The site exposes that geometry directly:
 - The **uniform / epicycle / equant** orrery toggle walks through three
   reductions of planetary dynamics, with characteristic peak errors of
   180° / 51° / 49° — three Greek toy models compared against modern truth.
+- The orrery's **geo ↔ helio frame toggle** runs the same modular-phase
+  arithmetic on two different period-relation bases: synodic dial-encoded
+  periods in geo (what the bronze gears actually computed) and
+  heliocentric sidereal periods in helio. Same `φ(t) = (t − REFERENCE_JD)
+  / period · 360°` form, different projection. Helio is what makes the
+  "viewer-of-T(t), not viewer-of-bronze-dials" claim concrete.
 - The `ECLIPSES` panel surfaces Saros offsets and anchor labels — quasi-
   periodic recurrence in discrete time, visible as the spiral wrapping.
 
@@ -73,11 +79,13 @@ on a tape.
 
 > "A scalar counter is atomic — you can't 'partially lock' it. There's
 > no phase decomposition to exploit."
-> — *UTLP / RFIP Documentation Suite*, Supplement S4 ([source](https://github.com/lemonforest/mlehaptics/blob/main/docs/misc/UTLP_RFIP_Complete_Documentation_Suite.md)) Practical consequence: warp the scrubber to year 50000 CE or
-100000 BCE and the dials still rotate correctly. Calendar and
-eclipse-search panels degrade gracefully past their internal year limits,
-but `STATE` and the dial visuals don't care — they're operating on the
-mechanism's own coordinates, not on the scalar.
+> — *UTLP / RFIP Documentation Suite*, Supplement S4 ([source](https://github.com/lemonforest/mlehaptics/blob/main/docs/misc/UTLP_RFIP_Complete_Documentation_Suite.md))
+
+Practical consequence: warp the year-jump to 50000 CE or 100000 BCE and the
+dials still rotate correctly. Calendar and eclipse-search panels degrade
+gracefully past their internal year limits, but `STATE` and the dial
+visuals don't care — they're operating on the mechanism's own coordinates,
+not on the scalar.
 
 So `phase-space-geometry` and `dynamical-systems` aren't strapped-on tags:
 the mechanism is a discrete dynamical system on a torus, the package
@@ -102,8 +110,11 @@ by a master clock. From the
 That formula is exactly what the Antikythera computes — its thirteen
 dials are `t mod pᵢ` (or `t mod` a small composite) for the period
 relations the mechanism encodes. Open the `STATE` dock tab and you're
-reading off `T(t)` for the bronze instance. The Opus unifies three
-protocols around that representation:
+reading off `T(t)` for the bronze instance. Toggle the orrery to
+heliocentric and you're seeing the same form running on a different
+period basis (sidereal helio orbits instead of synodic dial periods) —
+two projections of one modular flow, anchored at the same REFERENCE_JD.
+The Opus unifies three protocols around that representation:
 
 - **UTLP** — Universal Time Lord Protocol — distributed phase-lock timing
   for hardware nodes where each clock reads `atomic_time = local_time +
@@ -129,17 +140,23 @@ row collapsible):
 - **Front Dial · Cosmos** — concentric Egyptian / zodiac / planet rings + half-silvered moon
 - **Back Dial · Spirals** — Metonic 235-cell spiral, Saros 223-cell spiral, sub-dials
 - **Sky · 35.86°N** — stereographic projection from Antikythera island
-- **Orrery · Geocentric** — Hipparchian deferent + epicycle traces; toggle uniform / epicycle / equant
+- **Orrery · Geocentric / Heliocentric** — geo/helio frame toggle. Geo:
+  Hipparchian deferent + epicycle traces with uniform / epicycle / equant
+  model selectors. Helio: same modular-phase arithmetic in the mechanism's
+  reference frame, applied to heliocentric sidereal periods instead of
+  synodic ones — different projection, same flow.
 - **Gear DAG · Periphery Rule** — layered crank → trunk bridges → leaves; arch-mode toggles
 
 Ten research surfaces in the bottom dock (drag the top edge to resize):
 
 `STATE` · `ECLIPSES` · `RECON` · `EPHEM` · `HYPOTH` · `OPERATOR` · `ARCH` · `PAIRED` · `SEASONAL` · `PARETO`
 
-Plus a left-rail time control with play/pause, ±day/month/year/Metonic/Saros
-step buttons, JD scrubber spanning 5000 BCE → 5000 CE, operation regime
-(continuous / intermittent), and reconstruction column (Freeth 2021 / Wright /
-Price 1974 / compare).
+Plus a left-rail time control with hold-to-repeat ±day / ±month / ±year /
+±Metonic / ±Saros step buttons, a year-jump input that warps the JD to any
+era (the mechanism handles ±100,000 yr cleanly because the math is
+modular), play/pause + speed selector, operation regime (continuous /
+intermittent), and reconstruction column (Freeth 2021 / Wright / Price
+1974 / compare).
 
 Keyboard: `←/→` ±1 d, `[ ]` ±1 mo, `{ }` ±1 yr, `Space` play, `1`–`5` focus
 viewport, `C/S/M` toggle clutch / setting / missing, `R` reset, `H` help, `O`
