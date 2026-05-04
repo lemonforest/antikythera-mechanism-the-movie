@@ -44,8 +44,13 @@ const PY_METHOD = {
 // Install directly from the published wheel URL on PyPI's CDN. Pyodide's
 // micropip carries a lockfile that pins some packages; an explicit URL
 // bypasses it. Update both constants together when bumping the package.
-const PKG_VERSION   = "0.2.0";
-const PKG_WHEEL_URL = "https://files.pythonhosted.org/packages/9a/13/f55c7367e4a77e042e8ad6083f3fa160fe5c42c708785f00bd870f45ebb9/antikythera_spectral-0.2.0-py3-none-any.whl";
+//
+// v0.3.0 flipped the default HDC backend from complex128 (FHRR) to bit_alu
+// (BSC) — every operation in the encode/decode path is now integer-only
+// (XOR / popcount / shift on packed uint64s, ADR-0012). No FPU calls
+// anywhere; the encoder is structurally closer to the bronze device.
+const PKG_VERSION   = "0.3.0";
+const PKG_WHEEL_URL = "https://files.pythonhosted.org/packages/48/79/0fc9ed6717d8070238fb9e168163cbe52f4457a9cd45dea05cf706b10109/antikythera_spectral-0.3.0-py3-none-any.whl";
 
 const MICROPIP_BOOTSTRAP = `
 import micropip
@@ -126,7 +131,9 @@ export class Bridge {
   /* ---- public methods (the UI's bridge contract) ---------------------- */
 
   async dialState(jd) {
-    const raw = await this._call("dialState", { jd_tdb: jd });
+    // backend="bit" is the v0.3.0 default; pass it explicitly so we don't
+    // silently regress to FPU math if upstream ever flips the default again.
+    const raw = await this._call("dialState", { jd_tdb: jd, backend: "bit" });
     // Pure modular arithmetic — synthesise body longitudes for the zodiac
     // ring inline (no ephemerides needed). `egyptian` is convenience too.
     return {
@@ -156,10 +163,11 @@ export class Bridge {
     catch (e) { this.onLog(`bridge.${pyName} threw: ${e.message}`, "warn"); return null; }
   }
 
-  // find_eclipses with kernel="none" is algebraic / Saros-driven (no kernel data needed).
+  // find_eclipses with precise=false is algebraic / Saros-driven (no kernel data needed).
+  // v0.3.0 idiom: precise=false replaces the v0.2.0 kernel="none" workaround.
   async eclipses(jdStart, jdEnd) {
     const raw = await this._call("eclipses",
-      { jd_lo: jdStart, jd_hi: jdEnd, kind: "all", kernel: "none" });
+      { jd_lo: jdStart, jd_hi: jdEnd, kind: "all", precise: false });
     if (!raw?.eclipses) return { ok: false, count: 0, eclipses: [] };
     return {
       ok: true,
@@ -178,7 +186,7 @@ export class Bridge {
   async visibilityWindow(body, jd) {
     if (body === "sun" || body === "moon") return { ok: true, body, jd, alwaysVisible: true };
     const raw = await this._call("visibilityWindow",
-      { jd_lo: jd - 30, jd_hi: jd + 30, planet: body, kernel: "none" });
+      { jd_lo: jd - 30, jd_hi: jd + 30, planet: body, precise: false });
     const w = raw?.windows?.[0];
     if (!w) return { ok: true, body, jd, isVisible: false, _live: true };
     return {
@@ -235,7 +243,7 @@ export class Bridge {
     const jdHi = jdLo + 365.25;
     const out = await Promise.all(planets.map((p) =>
       this._callRaw("get_visibility_windows",
-        { jd_lo: jdLo, jd_hi: jdHi, planet: p, kernel: "none" })));
+        { jd_lo: jdLo, jd_hi: jdHi, planet: p, precise: false })));
     const windows = {};
     planets.forEach((p, i) => {
       windows[p] = out[i]?.windows

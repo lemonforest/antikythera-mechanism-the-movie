@@ -91,6 +91,41 @@ the mechanism is a discrete dynamical system on a torus, the package
 treats it as one, and this site is the interactive viewport into both
 that fact and its consequences.
 
+## v0.3.0: bit-ALU encoder — no FPU calls anywhere
+
+`antikythera-spectral` 0.3.0 ([2026-05-04](https://pypi.org/project/antikythera-spectral/0.3.0/))
+flipped the default HDC backend from `complex128` (FHRR-style,
+floating-point) to `bit_alu` (BSC-style, integer-only). Every operation
+in the encode / decode path is now XOR / popcount / bit-rotate on packed
+`uint64` words — **no FPU calls anywhere**.
+
+That matters here for two reasons:
+
+- **Structural fidelity to bronze.** The mechanism's state space is
+  finite (every dial is *Z*/*n**Z*); its operations are integer (a tooth
+  either meshes or it doesn't). `complex128` was a faithful holographic
+  abstraction but lived in *C*<sup>D</sup>. `bit_alu` lives in
+  {0, 1}<sup>D</sup> with bit-ops — the same algebraic substrate as the
+  device. The package's
+  [ADR-0012](https://github.com/lemonforest/mlehaptics/blob/main/docs/antikythera-maths/antikythera-spectral/docs/adr/0012-algebra-eigenbasis-vs-cad-scope.md)
+  treats *no FPU calls anywhere* as a purity property and makes it the
+  default discipline. The
+  [bit-ALU benchmark](https://github.com/lemonforest/mlehaptics/blob/main/docs/antikythera-maths/figures/bit_alu_findings.md)
+  has the cycle-alignment story.
+- **Free CPU speedup.** Same algorithm, ~125× smaller state, 2-10×
+  faster bind. We didn't have to wire anything: `pip install --upgrade`
+  and the next `get_dial_state` returns a bit-packed result. In the
+  browser, that's noticeably cheaper Pyodide cycles per JD — visible as
+  faster scrubber response when you hold a step button.
+
+This site pins `backend="bit"` explicitly in `js/bridge.js` so we can't
+silently regress to FPU math if upstream ever flips the default. The
+`dials` sub-dict (what the viewports actually consume — residue ·
+modulus · angle · cycle-period) is shape-stable across backends; only
+the internal `state` array changed shape (`{dtype: "uint64",
+shape: [n_words], n_bits: D}` instead of a `complex128` array). So this
+site got the ALU discipline for free.
+
 ## Lineage — where this fits in the PHYRFLY Opus
 
 This site is the ancient end of a longer thread laid out in
