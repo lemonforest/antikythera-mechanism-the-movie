@@ -44,8 +44,8 @@ const PY_METHOD = {
 // Install directly from the published wheel URL on PyPI's CDN. Pyodide's
 // micropip carries a lockfile that pins some packages; an explicit URL
 // bypasses it. Update both constants together when bumping the package.
-const PKG_VERSION   = "0.2.0";
-const PKG_WHEEL_URL = "https://files.pythonhosted.org/packages/9a/13/f55c7367e4a77e042e8ad6083f3fa160fe5c42c708785f00bd870f45ebb9/antikythera_spectral-0.2.0-py3-none-any.whl";
+const PKG_VERSION   = "0.2.1";
+const PKG_WHEEL_URL = "https://files.pythonhosted.org/packages/dd/db/e55a572002ceed3fc30e40275a84c49b98dfc08df458c0bd213eece2ab55/antikythera_spectral-0.2.1-py3-none-any.whl";
 
 const MICROPIP_BOOTSTRAP = `
 import micropip
